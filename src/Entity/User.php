@@ -3,6 +3,8 @@
 namespace App\Entity;
 
 use App\Repository\UserRepository;
+use Doctrine\Common\Collections\ArrayCollection;
+use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
 use Symfony\Component\Security\Core\User\UserInterface;
@@ -30,6 +32,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     #[ORM\Column]
     private ?string $password = null;
+
+    /**
+     * @var Collection<int, Status>
+     */
+    #[ORM\OneToMany(targetEntity: Status::class, mappedBy: 'reader', orphanRemoval: true)]
+    private Collection $statuses;
+
+    public function __construct()
+    {
+        $this->statuses = new ArrayCollection();
+    }
 
     public function getId(): ?int
     {
@@ -99,5 +112,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function eraseCredentials(): void
     {
         // @deprecated, to be removed when upgrading to Symfony 8
+    }
+
+    /**
+     * @return Collection<int, Status>
+     */
+    public function getStatuses(): Collection
+    {
+        return $this->statuses;
+    }
+
+    public function addStatus(Status $status): static
+    {
+        if (!$this->statuses->contains($status)) {
+            $this->statuses->add($status);
+            $status->setReader($this);
+        }
+
+        return $this;
+    }
+
+    public function removeStatus(Status $status): static
+    {
+        if ($this->statuses->removeElement($status)) {
+            // set the owning side to null (unless already changed)
+            if ($status->getReader() === $this) {
+                $status->setReader(null);
+            }
+        }
+
+        return $this;
     }
 }
