@@ -2,12 +2,13 @@
 
 namespace App\Entity;
 
-use App\Repository\AuthorRepository;
+use App\Repository\WriterRepository;
+use Symfony\Component\Validator\Constraints as Assert;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
 
-#[ORM\Entity(repositoryClass: AuthorRepository::class)]
+#[ORM\Entity(repositoryClass: WriterRepository::class)]
 #[ORM\Table(name:"writer")]
 class Writer
 {
@@ -19,8 +20,8 @@ class Writer
     #[ORM\Column(length: 255)]
     private ?string $name = null;
 
-    #[ORM\Column]
-    private ?\DateTime $birthdate = null;
+    #[ORM\Column(type:"date")]
+    private $birthdate = null;
 
     /**
      * @var Collection<int, Book>
@@ -50,12 +51,12 @@ class Writer
         return $this;
     }
 
-    public function getBirthdate(): ?\DateTime
+    public function getBirthdate(): ?\DateTimeInterface
     {
         return $this->birthdate;
     }
 
-    public function setBirthdate(\DateTime $birthdate): static
+    public function setBirthdate(\DateTimeInterface $birthdate): static
     {
         $this->birthdate = $birthdate;
 

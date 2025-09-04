@@ -1,0 +1,37 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Writer index{% endblock %}
+
+{% block body %}
+    <h1>Writer index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Birthdate</th>
+                <th>actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for writer in writers %}
+            <tr>
+                <td>{{ writer.id }}</td>
+                <td>{{ writer.name }}</td>
+                <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }}</td>
+                <td>
+                    <a href="{{ path('app_writer_show', {'id': writer.id}) }}">show</a>
+                    <a href="{{ path('app_writer_edit', {'id': writer.id}) }}">edit</a>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_writer_new') }}">Create new</a>
+{% endblock %}

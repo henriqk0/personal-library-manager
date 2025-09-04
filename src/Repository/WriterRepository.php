@@ -2,18 +2,18 @@
 
 namespace App\Repository;
 
-use App\Entity\Author;
+use App\Entity\Writer;
 use Doctrine\Bundle\DoctrineBundle\Repository\ServiceEntityRepository;
 use Doctrine\Persistence\ManagerRegistry;
 
 /**
- * @extends ServiceEntityRepository<Author>
+ * @extends ServiceEntityRepository<Writer>
  */
-class AuthorRepository extends ServiceEntityRepository
+class WriterRepository extends ServiceEntityRepository
 {
     public function __construct(ManagerRegistry $registry)
     {
-        parent::__construct($registry, Author::class);
+        parent::__construct($registry, Writer::class);
     }
 
     //    /**
