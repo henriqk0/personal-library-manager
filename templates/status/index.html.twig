@@ -1,0 +1,34 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Status index{% endblock %}
+
+{% block body %}
+    <h1>Status index</h1>
+
+    <table class="table">
+        <thead>
+            <tr>
+                <th>Book</th>
+                <th>Pages</th>
+                <th>Progress</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for s in statuses %}
+            <tr>
+                <td>{{ s.book.title }}</td>
+                <td>{{ s.book.getNumPages() }}</td>
+                <td>{{  (s.getCurrentPage() / s.book.getNumPages() ) * 100 | number_format(2) }}%</td>
+                <td>
+                </td>
+            </tr>
+        {% else %}
+            <tr>
+                <td colspan="4">no records found</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_status_new') }}">Create new</a>
+{% endblock %}
