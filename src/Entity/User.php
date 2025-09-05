@@ -39,8 +39,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Status::class, mappedBy: 'reader', orphanRemoval: true)]
     private Collection $statuses;
 
-    public function __construct()
+    public function __construct($id = null, $email = null, $password = null)
     {
+        $this->id = $id;
+        $this->email = $email;
+        $this->password = $password;
         $this->statuses = new ArrayCollection();
     }
 
