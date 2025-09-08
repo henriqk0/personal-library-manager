@@ -14,6 +14,7 @@ class WriterType extends AbstractType
         $builder
             ->add('name')
             ->add('birthdate')
+            ->add('birth_before_christ')
         ;
     }
 

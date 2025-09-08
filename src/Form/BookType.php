@@ -4,6 +4,7 @@ namespace App\Form;
 
 use App\Entity\Book;
 use App\Entity\Writer;
+use Doctrine\DBAL\Types\IntegerType;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
@@ -15,10 +16,11 @@ class BookType extends AbstractType
     {
         $builder
             ->add('title')
-            ->add('num_pages')
+            ->add(child: 'num_pages', options: [
+                'label'=> 'Pages',
+            ])
             ->add('writer', EntityType::class, [
                 'class' => Writer::class,
-                'choice_label' => 'id',
             ])
         ;
     }

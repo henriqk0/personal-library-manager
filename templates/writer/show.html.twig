@@ -17,7 +17,11 @@
             </tr>
             <tr>
                 <th>Birthdate</th>
-                <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d H:i:s') : '' }}</td>
+                {% if writer.isBirthBeforeChrist() %}
+                    <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }} B.C.</td>
+                {% else %}
+                    <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }} A.D.</td>
+                {% endif %}
             </tr>
         </tbody>
     </table>

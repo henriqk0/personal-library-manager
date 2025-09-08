@@ -1,16 +1,16 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Status index{% endblock %}
+{% block title %}My Readings{% endblock %}
 
 {% block body %}
-    <h1>Status index</h1>
+    <h1>My Readings</h1>
 
     <table class="table">
         <thead>
             <tr>
                 <th>Book</th>
                 <th>Pages</th>
-                <th>Progress</th>
+                <th>Read</th>
             </tr>
         </thead>
         <tbody>
@@ -18,8 +18,10 @@
             <tr>
                 <td>{{ s.book.title }}</td>
                 <td>{{ s.book.getNumPages() }}</td>
-                <td>{{  (s.getCurrentPage() / s.book.getNumPages() ) * 100 | number_format(2) }}%</td>
+                <td>{{ s.getCurrentPage() }}</td>
                 <td>
+                    <a href="{{ path('app_status_show', {'id': s.id}) }}">show</a>
+                    <a href="{{ path('app_status_edit', {'id': s.id}) }}">edit</a>
                 </td>
             </tr>
         {% else %}

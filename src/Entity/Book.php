@@ -115,7 +115,7 @@ class Book
         return $this;
     }
 
-    public function __tostring(): string
+    public function __toString(): string
     {
         return "$this->title, $this->num_pages p.";
     }

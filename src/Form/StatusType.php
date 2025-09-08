@@ -18,15 +18,19 @@ class StatusType extends AbstractType
             ->add('current_page')
             ->add('book', EntityType::class, [
                 'class' => Book::class,
-                'choice_label' => 'id',
             ])
         ;
+        if ($options['updating']) {
+            $builder
+                ->add(child: 'starting_date',options: ['label' => 'Starting date']);
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
     {
         $resolver->setDefaults([
             'data_class' => Status::class,
+            'updating' => false,
         ]);
     }
 }
