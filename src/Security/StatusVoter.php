@@ -4,23 +4,25 @@ namespace App\Security;
 
 use App\Entity\User;
 use App\Entity\Status;
-use Symfony\Component\Security\Core\Authorization\Voter\Vote;
 use Symfony\Component\Security\Core\Authorization\Voter\Voter;
 use Symfony\Component\Security\Core\Authentication\Token\TokenInterface;
-use Symfony\Component\Security\Core\Authorization\Voter\VoterInterface;
-
+use Symfony\Component\Security\Core\Authorization\AccessDecisionManagerInterface;
 
 class StatusVoter extends Voter
 {
     const VIEW = "view";
     const EDIT = "edit";
-    const DELETE = "edit";
+    const DELETE = "delete";
+
+    public function __construct(
+        private AccessDecisionManagerInterface $_accessDecisionManager,
+    ) {
+    }
 
     protected function supports(string $attribute, mixed $subject): bool
     {
         if(!in_array($attribute, [self::VIEW, self::EDIT, self::DELETE])){
             return false;
-
         }
 
         if(!$subject instanceof Status) {
@@ -30,42 +32,37 @@ class StatusVoter extends Voter
         return true;
     }
 
-    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token, ?Vote $vote = null): bool
+    protected function voteOnAttribute(string $attribute, mixed $subject, TokenInterface $token): bool
     {
         $user = $token->getUser();
 
         if (!$user instanceof User) {
-            $vote?->addReason('The user is not logged in.');
             return false;
         }
 
+        if ($this->_accessDecisionManager->decide($token, ['ROLE_SUPER_ADMIN'])){
+            return true;
+        }
+
+        /** @var Status $status */
         $status = $subject;
+
         return match($attribute) {
-            self::VIEW => $this->canView($status, $user),
-            self::EDIT => $this->canView($status, $user, $vote),
-            self::DELETE => $this->canView($status, $user),
+            self::VIEW => $this->canManipulate($status, $user),
+            self::EDIT => $this->canManipulate($status, $user),
+            self::DELETE => $this->canManipulate($status, $user),
             default => throw new \LogicException('This code shoud not be reached!')
         };
     }
 
-    private function canView(Status $status, User $user): bool
+    private function __itsOwner(Status $status, User $user): bool 
     {
-        if ($this->canEdit($status, $user)) {
-            return true;
-        }
-        return !$status->isPrivate();
+        return $user === $status->getReader();
     }
 
-    private function canEdit(Status $status, User $user, ?Vote $vote): bool
+    private function canManipulate(Status $status, User $user): bool
     {
-        if ($user === $status->getReader()) {
-            return true;
-        }
-
-        $vote?->addReason(sprintf('The logged in user (username: $s) is not the reader of this (id: %d: $).',
-            $user->getEmail(), $status->getId()));
-
-        return false;
+        return $this->__itsOwner($status, $user);
     }
 }
 

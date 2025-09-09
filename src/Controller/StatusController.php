@@ -10,15 +10,14 @@ use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Componente\Security\Http\Attribute\InGranted;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 
 
 final class StatusController extends AbstractController
 {
-
-    private $em;
+    private $_em;
     public function __construct(EntityManagerInterface $em){
-        $this->em = $em;
+        $this->_em = $em;
     }
 
     #[Route('/read/new', name: 'app_status_new', methods: ['GET', 'POST'])]
@@ -37,8 +36,8 @@ final class StatusController extends AbstractController
             $status->setCurrentPage(0);
             $status->setStartingDate(new DateTime());
             $status->setCompletionDate(null);
-            $this->em->persist($status);
-            $this->em->flush();
+            $this->_em->persist($status);
+            $this->_em->flush();
 
             return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -59,6 +58,7 @@ final class StatusController extends AbstractController
 
     
     #[Route(path:'/read/{id}', name:'app_status_show', methods: ['GET'])]
+    #[IsGranted('view', 'status', 'Read not found', 404)]
     public function show(Status $status): Response
     {
         return $this->render('status/show.html.twig', [
@@ -67,13 +67,14 @@ final class StatusController extends AbstractController
     }
 
     #[Route(path:'/read/{id}/edit', name:'app_status_edit', methods: ['GET', 'POST'])]
+    #[IsGranted('edit', 'status', 'Read not found', 404)]
     public function edit(Request $request, Status $status): Response
     {
         $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $this->em->flush();
+            $this->_em->flush();
 
             return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
         }
@@ -85,12 +86,13 @@ final class StatusController extends AbstractController
     }
 
     #[Route(path:'/read/{id}', name:'app_status_delete', methods: ['POST'])]
+    #[IsGranted('delete', 'status', 'Read not found', 404)]
     public function delete(Request $request, Status $status): Response
     {
         if ($this->isCsrfTokenValid('delete'.$status->getId(), 
         $request->getPayload()->getString('_token'))) {
-            $this->em->remove($status);
-            $this->em->flush();
+            $this->_em->remove($status);
+            $this->_em->flush();
         }
 
         return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);

@@ -15,14 +15,14 @@ class StatusType extends AbstractType
     public function buildForm(FormBuilderInterface $builder, array $options): void
     {
         $builder
-            ->add('current_page')
             ->add('book', EntityType::class, [
                 'class' => Book::class,
             ])
         ;
         if ($options['updating']) {
             $builder
-                ->add(child: 'starting_date',options: ['label' => 'Starting date']);
+                ->add('current_page')
+                ->add(child: 'starting_date', options: ['label' => 'Starting date']);
         }
     }
 
