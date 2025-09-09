@@ -6,6 +6,7 @@ use App\Repository\BookRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
 
 #[ORM\Entity(repositoryClass: BookRepository::class)]
 class Book
@@ -19,6 +20,10 @@ class Book
     private ?string $title = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThan(
+        value:  0,
+        message: "The number of pages needs to be positive."
+    )]
     private ?int $num_pages = null;
 
     private Collection $owner;
@@ -108,5 +113,10 @@ class Book
         }
 
         return $this;
+    }
+
+    public function __toString(): string
+    {
+        return "$this->title, $this->num_pages p.";
     }
 }

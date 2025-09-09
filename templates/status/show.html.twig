@@ -1,0 +1,48 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}My Read{% endblock %}
+
+{% block body %}
+    <h1>My Read</h1>
+
+    <table class="table">
+        <tbody>
+            <tr>
+                <th>Book</th>
+                <td>{{ status.book.title }}</td>
+            </tr>
+
+            <tr>
+                <th>Pages</th>
+                <td>{{ status.book.getNumPages() }}</td>
+            </tr>
+
+            <tr>
+                <th>Started at</th>
+                <td>{{ status.getStartingDate() ? status.getCompletionDate()|date('Y-m-d') : ''}}</th>
+            </tr>
+
+            {% if ( status.getCurrentPage() != status.book.getNumPages() ) %}
+                <tr>
+                    <th>Read</th>
+                    <td>{{ status.getCurrentPage() }}</td>
+                </tr>
+                <tr>
+                    <th>Progress</th>
+                    <td>{{  (status.getCurrentPage() / status.book.getNumPages() ) * 100 | round(2) }}%</td>
+                </tr>
+            {% else %}
+                <tr>
+                    <th>Finished at</th>
+                    <td>{{ status.getCompletionDate() ? status.getCompletionDate()|date('Y-m-d') : ''}}</th>
+                </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <a href="{{ path('app_status_index') }}">back to list</a>
+
+    <a href="{{ path('app_status_edit', {'id': status.id}) }}">edit</a>
+
+    {{ include('status/_delete_form.html.twig') }}
+{% endblock %}

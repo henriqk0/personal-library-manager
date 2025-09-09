@@ -4,6 +4,8 @@ namespace App\Entity;
 
 use App\Repository\StatusRepository;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Validator\Constraints as Assert;
+use App\Validator\Constraints as CustomAssert;
 
 #[ORM\Entity(repositoryClass: StatusRepository::class)]
 class Status
@@ -17,6 +19,11 @@ class Status
     private ?\DateTime $starting_date = null;
 
     #[ORM\Column]
+    #[Assert\GreaterThanOrEqual(
+        value:  0,
+        message: "The current page cannot be negative."
+    )]
+    #[CustomAssert\ValidCurrentPage]  
     private ?int $current_page = null;
 
     #[ORM\ManyToOne(inversedBy: 'statuses')]
@@ -27,6 +34,15 @@ class Status
     #[ORM\JoinColumn(nullable: false)]
     private ?Book $book = null;
 
+    #[ORM\Column(nullable: true)]
+    private ?\DateTime $completion_date = null;
+
+    public function __construct()
+    {
+        $this->current_page = 0;
+        $this->starting_date = new \DateTime();
+    }
+    
     public function getId(): ?int
     {
         return $this->id;
@@ -76,6 +92,18 @@ class Status
     public function setBook(?Book $book): static
     {
         $this->book = $book;
+
+        return $this;
+    }
+
+    public function getCompletionDate(): ?\DateTime
+    {
+        return $this->completion_date;
+    }
+
+    public function setCompletionDate(?\DateTime $completion_date): static
+    {
+        $this->completion_date = $completion_date;
 
         return $this;
     }

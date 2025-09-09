@@ -29,6 +29,9 @@ class Writer
     #[ORM\OneToMany(targetEntity: Book::class, mappedBy: 'writer')]
     private Collection $writer;
 
+    #[ORM\Column]
+    private ?bool $birth_before_christ = null;
+
     public function __construct()
     {
         $this->writer = new ArrayCollection();
@@ -89,6 +92,23 @@ class Writer
                 $writer->setWriter(null);
             }
         }
+
+        return $this;
+    }
+
+    public function __toString():string
+    {
+        return $this->getName();
+    }
+
+    public function isBirthBeforeChrist(): ?bool
+    {
+        return $this->birth_before_christ;
+    }
+
+    public function setBirthBeforeChrist(bool $birth_before_christ): static
+    {
+        $this->birth_before_christ = $birth_before_christ;
 
         return $this;
     }
