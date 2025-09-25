@@ -3,9 +3,24 @@
 {% block title %}New Book{% endblock %}
 
 {% block body %}
-    <h1>Create new Book</h1>
+  <section id="create-section" class="content-section active">
+    <div class="page-header">
+      <h1 class="page-title">Add a new Book</h1>
+    </div>
 
-    {{ include('book/_form.html.twig') }}
+    <div class="md-card">
+      {% if form is defined %}
+        {{ include('book/_form.html.twig',  {'form': form, 'button_label': 'Add'} ) }}
+      {% else %}
+      {% endif %}
+    </div>
+  </section>
 
-    <a href="{{ path('app_book_index') }}">back to list</a>
+  {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+    <script>
+      function goBackCreate() {
+        window.location.href = "{{ path('app_book_index') }}"
+      }
+    </script>
+  {% endif %}
 {% endblock %}

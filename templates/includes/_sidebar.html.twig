@@ -1,0 +1,91 @@
+<!-- Top App Bar -->
+<header class="top-app-bar">
+  <button class="menu-button" id="menuButton" aria-label="Open navigation menu">
+    <span class="material-icons">menu</span>
+  </button>
+  <h1 class="app-title">Personal Library App</h1>
+</header>
+
+<!-- Backdrop -->
+<div class="backdrop" id="backdrop"></div>
+
+<!-- Sidenav -->
+<nav class="sidenav" id="sidenav">
+  <div class="sidenav-header">
+    <div class="sidenav-title">Navigation</div>
+    <div class="sidenav-subtitle">Personal library</div>
+  </div>
+  
+  <ul class="nav-list">
+    <li>
+      <a id="read-ops" class="nav-item {% if app.request.pathInfo starts with '/read' or app.request.attributes.get('_route') == 'app_status_index' %}active{% endif %}">
+        <span class="material-icons">table_view</span>
+        <span class="nav-item-text">My Readings</span>
+      </a>
+    </li>
+    {# add in the future with the reading metrics
+    <li>
+      <a href="#" class="nav-item">
+        <span class="material-icons">analytics</span>
+        <span class="nav-item-text">Analytics</span>
+      </a>
+    </li>
+    #}
+    {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+    <li>
+      <a id="book-ops" class="nav-item {% if app.request.pathInfo starts with '/book' %}active{% endif %}">
+        <span class="material-icons">book</span>
+        <span class="nav-item-text">Books</span>
+      </a>
+    </li>
+    <li>
+      <a id="writer-ops" class="nav-item {% if app.request.pathInfo starts with '/writer' %}active{% endif %}">
+        <span class="material-icons">person</span>
+        <span class="nav-item-text">Writers</span>
+      </a>
+    </li>
+    {% else %}
+    <li>
+      <a id="book-new" class="nav-item {% if app.request.pathInfo starts with '/book' %}active{% endif %}">
+        <span class="material-icons">add</span>
+        <span class="nav-item-text">Add Books</span>
+      </a>
+    </li>
+    <li>
+      <a id="writer-new" class="nav-item {% if app.request.pathInfo starts with '/writer' %}active{% endif %}">
+        <span class="material-icons">person_add</span>
+        <span class="nav-item-text">Add Writers</span>
+      </a>
+    </li>
+    {% endif %}
+
+    <li>
+      <a href="{{ path('app_logout')}} " class="nav-item">
+        <span class="material-icons">exit_to_app</span>
+        <span class="nav-item-text">Sign out</span>
+      </a>
+    </li>
+  </ul>
+</nav>
+
+<script>
+  document.getElementById('read-ops').addEventListener('click', function(){
+    window.location.href = "{{ path('app_status_index') }}"
+  });
+  {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+    document.getElementById('book-ops').addEventListener('click', function(){
+      window.location.href = "{{ path('app_book_index')}}"
+    })
+    document.getElementById('writer-ops').addEventListener('click', function(){
+      window.location.href = "{{ path('app_writer_index')}}"
+    })
+  {% else %}
+    document.getElementById('book-new').addEventListener('click', function(){
+      window.location.href = "{{ path('app_book_new')}}"
+    })
+    document.getElementById('writer-new').addEventListener('click', function(){
+      window.location.href = "{{ path('app_writer_new')}}"
+    })
+
+  {% endif %}
+</script>

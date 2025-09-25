@@ -3,46 +3,104 @@
 {% block title %}My Read{% endblock %}
 
 {% block body %}
-    <h1>My Read</h1>
+  <!-- Detail View Section -->
+  <section id="detail-section" class="content-section active">
+    <div class="page-header">
+      <button class="md-button md-button--text" onclick="goBack()">
+        <span class="material-icons">arrow_back</span>
+        Back
+      </button>
+      <h1 class="page-title">Read Details</h1>
+      <button class="md-button md-button--primary" onclick="goEdit()">
+        <span class="material-icons">edit</span>
+        Edit
+      </button>
+    </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Book</th>
-                <td>{{ status.book.title }}</td>
-            </tr>
-
-            <tr>
-                <th>Pages</th>
-                <td>{{ status.book.getNumPages() }}</td>
-            </tr>
-
-            <tr>
-                <th>Started at</th>
-                <td>{{ status.getStartingDate() ? status.getCompletionDate()|date('Y-m-d') : ''}}</th>
-            </tr>
-
+    <div class="detail-container">
+      <div class="md-card detail-card">
+        <div class="detail-header">
+          <div class="avatar-large">
+            <span class="material-icons">book</span>
+          </div>
+          <div class="detail-info">
+            <h2 class="detail-name">{{ status.book.title }}</h2>
+            <p class="detail-email">{{ status.book.writer }}</p>
             {% if ( status.getCurrentPage() != status.book.getNumPages() ) %}
-                <tr>
-                    <th>Read</th>
-                    <td>{{ status.getCurrentPage() }}</td>
-                </tr>
-                <tr>
-                    <th>Progress</th>
-                    <td>{{  (status.getCurrentPage() / status.book.getNumPages() ) * 100 | round(2) }}%</td>
-                </tr>
+              <span class="md-chip md-chip--success">Active</span>
             {% else %}
-                <tr>
-                    <th>Finished at</th>
-                    <td>{{ status.getCompletionDate() ? status.getCompletionDate()|date('Y-m-d') : ''}}</th>
-                </tr>
+              <span class="md-chip md-chip--success">Finished!</span>
             {% endif %}
-        </tbody>
-    </table>
+          </div>
+        </div>
 
-    <a href="{{ path('app_status_index') }}">back to list</a>
+        <div class="detail-content">
+          <div class="detail-section">
+            <h3 class="section-title">Read Data</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Book</span>
+                <span class="detail-value">{{ status.book.title }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Pages</span>
+                <span class="detail-value">{{ status.book.getNumPages() }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Started at</span>
+                <span class="detail-value">{{ status.getStartingDate() ? status.getCompletionDate()|date('m/d/Y') : ''}}</span>
+              </div>
+              {% if ( status.getCurrentPage() != status.book.getNumPages() ) %}
+                <div class="detail-item">
+                  <span class="detail-label">Read</span>
+                  <span class="detail-value">{{ status.getCurrentPage() }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">Progress</span>
+                  <span class="detail-value">{{  (status.getCurrentPage() / status.book.getNumPages() ) * 100 | round(2) }}%</span>
+                </div>
+              {% else %}
+                <div class="detail-item">
+                  <span class="detail-label">CompletionDate</span>
+                  <span class="detail-value">{{ status.getCompletionDate() ? status.getCompletionDate()|date('Y-m-d') : ''}}</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <a href="{{ path('app_status_edit', {'id': status.id}) }}">edit</a>
 
-    {{ include('status/_delete_form.html.twig') }}
+  <!-- Update View Section -->
+  <section id="create-section" class="content-section">
+    <div class="page-header">
+      <h1 class="page-title">Edit Read</h1>
+    </div>
+
+    <div class="md-card">
+        {% if form is defined %}
+            {{ include('status/_form.html.twig',  {'form': form, 'button_label': 'Update'} ) }}
+        {% else %}
+        {% endif %}
+    </div>
+  </section>
+
+
+  <script>
+    function goEdit() {
+      document.title = "Edit Read";
+      document.getElementById('detail-section').classList.remove("active");
+      document.getElementById('create-section').classList.add("active");
+    }
+    function goBackEdit() {
+      document.title = "My Read";
+      document.getElementById('create-section').classList.remove("active");
+      document.getElementById('detail-section').classList.add("active");
+    }
+    function goBack() {
+      window.location.href = "{{ path('app_status_index') }}"
+    }
+  </script>
 {% endblock %}

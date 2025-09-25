@@ -3,35 +3,212 @@
 {% block title %}Writer index{% endblock %}
 
 {% block body %}
-    <h1>Writer index</h1>
+  <!-- Data Table Section -->
+  <section id="table-section" class="content-section active">
+    <div class="page-header" style="margin-top:50px">
+      <h1 class="page-title">Writer index</h1>
+      <button class="md-button md-button--primary" onclick="createWriter()" >
+        <span class="material-icons">add</span>
+        Add Writer
+      </button>
+    </div>
 
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Id</th>
-                <th>Name</th>
-                <th>Birthdate</th>
-                <th>actions</th>
-            </tr>
-        </thead>
-        <tbody>
-        {% for writer in writers %}
-            <tr>
-                <td>{{ writer.id }}</td>
-                <td>{{ writer.name }}</td>
-                <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }}</td>
-                <td>
-                    <a href="{{ path('app_writer_show', {'id': writer.id}) }}">show</a>
-                    <a href="{{ path('app_writer_edit', {'id': writer.id}) }}">edit</a>
-                </td>
-            </tr>
-        {% else %}
-            <tr>
-                <td colspan="4">no records found</td>
-            </tr>
-        {% endfor %}
-        </tbody>
-    </table>
+    <!-- Search and Filters -->
+    <div class="md-card search-filters">
+      <div class="md-input-group">
+        <input type="text" class="md-input" id="searchInput" placeholder="Search writer...">
+        <span class="material-icons md-input-icon">search</span>
+      </div>
+    </div>
 
-    <a href="{{ path('app_writer_new') }}">Create new</a>
+    <div class="md-data-table">
+      <div class="table-container">
+        <table class="md-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Birthdate</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+          </tbody>
+        </table>
+      </div>
+
+      <div class="cards-container" id="cardsContainer">
+
+      </div>
+    </div>
+  </section>
+
+  <script>
+    if (!window.myWritersInitialized) {
+      window.myWritersInitialized = true;
+
+      var myWriters = {{ writerJson|raw }};
+
+      document.addEventListener('turbo:load', function () {
+        renderTable();
+      });
+
+      function showSection(sectionName) {
+        document.querySelectorAll(".content-section").forEach((section) => {
+          section.classList.remove("active");
+        });
+
+        const targetSection = document.getElementById(sectionName + "-section");
+        if (targetSection) {
+          targetSection.classList.add("active");
+        }
+      }
+
+      // Data table functionality
+      function renderTable() {
+        const tableBody = document.getElementById("tableBody");
+        const cardsContainer = document.getElementById("cardsContainer");
+
+        tableBody.innerHTML = "";
+        cardsContainer.innerHTML = "";
+
+        myWriters.forEach((writer) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${writer.name}</td>
+            <td>${writer.birthdate}</td>
+            <td>
+              <button class="md-button md-button--text" onclick="viewWriter(${writer.id})">
+                <span class="material-icons">visibility</span>
+              </button>
+              <button class="md-button md-button--text" onclick="editWriter(${writer.id})">
+                <span class="material-icons">edit</span>
+              </button>
+              
+              <form method="post" id="delete-form(${writer.id})" action="${writer.deleteUrl}" style="display:none">
+                <input type="hidden" id="delete-token(${writer.id})" name="_token" value="${writer.csrfToken}">
+              </form>
+
+              <button class="md-button md-button--text" onclick="deleteWriter(${writer.id})">
+                <span class="material-icons">delete</span>
+              </button>
+            </td>
+          `;
+          tableBody.appendChild(row);
+
+          const card = document.createElement("div");
+          card.className = "data-card";
+          card.innerHTML = `
+            <div class="card-header">
+              <div>
+                <div class="card-title">${writer.name}</div>
+                <div class="card-subtitle">Birthdate: ${writer.birthdate}</div>
+              </div>
+            </div>
+            <div class="card-content">
+              <div class="card-field">
+                <span class="card-label">Name</span>
+                <span class="card-value">${writer.name}</span>
+              </div>
+            </div>
+            <div class="card-actions">
+              <button class="md-button md-button--text" onclick="viewWriter(${writer.id})">
+                <span class="material-icons">visibility</span> View
+              </button>
+              <button class="md-button md-button--text" onclick="editWriter(${writer.id})">
+                <span class="material-icons">edit</span> Edit
+              </button>
+
+              <form method="post" id="delete-form(${writer.id})" action="${writer.deleteUrl}" style="display:none">
+                <input type="hidden" id="delete-token(${writer.id})" name="_token" value="${writer.csrfToken}">
+              </form>
+
+              <button class="md-button md-button--text" onclick="deleteWriter(${writer.id})">
+                <span class="material-icons">delete</span> Delete
+              </button>
+            </div>
+          `;
+          cardsContainer.appendChild(card);
+        });
+      }
+
+      // Search functionality
+      document.getElementById("searchInput").addEventListener("input", (e) => {
+        const searchTerm = e.target.value.toLowerCase();
+        const rows = document.querySelectorAll("#tableBody tr");
+        const cards = document.querySelectorAll(".data-card");
+
+        rows.forEach((row) => {
+          const text = row.textContent.toLowerCase();
+          row.style.display = text.includes(searchTerm) ? "" : "none";
+        });
+
+        cards.forEach((card) => {
+          const text = card.textContent.toLowerCase();
+          card.style.display = text.includes(searchTerm) ? "" : "none";
+        });
+      });
+
+      function createWriter() {
+        window.location.href = "{{ path('app_writer_new') }}";
+      }
+
+      function viewWriter(id) {
+        const writer = myWriters.find((b) => b.id === id);
+        if (writer) {
+          const baseUrl = "{{ path('app_writer_show', {'id': 'PLACEHOLDER'}) }}";
+          window.location.href = baseUrl.replace('PLACEHOLDER', writer.id);
+        }
+      }
+
+      function editWriter(id) {
+        const writer = myWriters.find((b) => b.id === id);
+
+        if (writer) {
+          const baseUrl = "{{ path('app_writer_edit', {'id': 'PLACEHOLDER'}) }}";
+          window.location.href = baseUrl.replace('PLACEHOLDER', writer.id);
+        }
+      }
+
+      function deleteWriter(id) {
+        if (confirm("Are you sure you want to delete this writer?")) {
+          const form = document.getElementById(`delete-form(${id})`);
+
+          if (!form) {
+            alert("Forms not found.");
+            return;
+          }
+
+          form.submit();
+        }
+      }
+
+      // Form submission
+      //document.getElementById("writerForm").addEventListener("submit", function (e) {
+      //  e.preventDefault();
+      //
+      //  const title = document.getElementById("writerTitle").value;
+      //  const current = document.getElementById("writerCurrent").value;
+      //
+      //  alert("Read successfully!");
+      //  goBack();
+      //});
+
+      // Input label animation
+      //document.querySelectorAll(".md-input, .md-textarea, .md-select").forEach((input) => {
+      //  input.addEventListener("focus", function () {
+      //    this.parentElement.classList.add("focused");
+      //  });
+      //
+      //  input.addEventListener("blur", function () {
+      //    this.parentElement.classList.remove("focused");
+      //    if (this.value) {
+      //      this.parentElement.classList.add("filled");
+      //    } else {
+      //      this.parentElement.classList.remove("filled");
+      //    }
+      //  });
+      //});
+    }
+  </script>
+
 {% endblock %}

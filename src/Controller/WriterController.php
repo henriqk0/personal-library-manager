@@ -9,31 +9,66 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\Attribute\Route;
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 #[Route('/writer')]
 final class WriterController extends AbstractController
 {
+    private RouterInterface $_router;
+    private CsrfTokenManagerInterface $_csrfTokenManager;
+    private $_em;
+    public function __construct(
+        EntityManagerInterface $em, 
+        CsrfTokenManagerInterface $csrf,
+        RouterInterface $router, 
+        ){
+        $this->_em = $em;
+        $this->_router = $router;
+        $this->_csrfTokenManager = $csrf;
+    }
+
     #[Route(name: 'app_writer_index', methods: ['GET'])]
     public function index(WriterRepository $writerRepository): Response
     {
+        $writers = $writerRepository->findAll();
+
+        $writersData = array_map(function ($writer){
+            return [
+                'id' => $writer->getId(),
+                'name' => $writer->getName(),
+                'birthdate'=> $writer->isBirthBeforeChrist() ? 
+                                "{$writer->getBirthdate()->format('Y-m-d')} BC" :
+                                "{$writer->getBirthdate()->format('Y-m-d')} AD",
+                'deleteUrl' => $this->_router->generate('app_writer_delete', ['id' => $writer->getId()]),
+                'csrfToken' => $this->_csrfTokenManager->getToken('delete' . $writer->getId())->getValue(),
+            ];
+        }, $writers);
+
         return $this->render('writer/index.html.twig', [
-            'writers' => $writerRepository->findAll(),
+            'writerJson'=> json_encode($writersData),
         ]);
     }
 
     #[Route('/new', name: 'app_writer_new', methods: ['GET', 'POST'])]
-    public function new(Request $request, EntityManagerInterface $entityManager): Response
+    public function new(Request $request, Security $security): Response
     {
         $writer = new Writer();
         $form = $this->createForm(WriterType::class, $writer);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->persist($writer);
-            $entityManager->flush();
+            $this->_em->persist($writer);
+            $this->_em->flush();
 
-            return $this->redirectToRoute('app_writer_index', [], Response::HTTP_SEE_OTHER);
+            if ($security->isGranted('ROLE_ADMIN') || $security->isGranted('ROLE_MANAGER')) {
+                return $this->redirectToRoute('app_writer_index', [], Response::HTTP_SEE_OTHER);
+            }
+            else {
+                return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
+            }
         }
 
         return $this->render('writer/new.html.twig', [
@@ -42,38 +77,48 @@ final class WriterController extends AbstractController
         ]);
     }
 
-    #[Route('/{id}', name: 'app_writer_show', methods: ['GET'])]
-    public function show(Writer $writer): Response
-    {
-        return $this->render('writer/show.html.twig', [
-            'writer' => $writer,
-        ]);
-    }
-
-    #[Route('/{id}/edit', name: 'app_writer_edit', methods: ['GET', 'POST'])]
-    public function edit(Request $request, Writer $writer, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}', name: 'app_writer_show', methods: ['GET', 'POST'])]
+    public function show(Request $request, Writer $writer): Response
     {
         $form = $this->createForm(WriterType::class, $writer);
         $form->handleRequest($request);
 
         if ($form->isSubmitted() && $form->isValid()) {
-            $entityManager->flush();
+            $this->_em->flush();
+
+            return $this->redirectToRoute('app_writer_index', [], Response::HTTP_SEE_OTHER);
+        }
+
+        return $this->render('writer/show.html.twig', [
+            'writer' => $writer,
+            'form' => $form->createView(),
+        ]);
+    }
+
+    #[Route('/{id}/edit', name: 'app_writer_edit', methods: ['GET', 'POST'])]
+    public function edit(Request $request, Writer $writer, ): Response
+    {
+        $form = $this->createForm(WriterType::class, $writer);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->_em->flush();
 
             return $this->redirectToRoute('app_writer_index', [], Response::HTTP_SEE_OTHER);
         }
 
         return $this->render('writer/edit.html.twig', [
             'writer' => $writer,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route('/{id}', name: 'app_writer_delete', methods: ['POST'])]
-    public function delete(Request $request, Writer $writer, EntityManagerInterface $entityManager): Response
+    #[Route('/{id}/delete', name: 'app_writer_delete', methods: ['POST'])]
+    public function delete(Request $request, Writer $writer): Response
     {
         if ($this->isCsrfTokenValid('delete'.$writer->getId(), $request->getPayload()->getString('_token'))) {
-            $entityManager->remove($writer);
-            $entityManager->flush();
+            $this->_em->remove($writer);
+            $this->_em->flush();
         }
 
         return $this->redirectToRoute('app_writer_index', [], Response::HTTP_SEE_OTHER);

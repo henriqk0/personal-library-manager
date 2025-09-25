@@ -1,17 +1,97 @@
 <!DOCTYPE html>
 <html>
-    <head>
+    <head data-turbo-permanent>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>{% block title %}{% endblock %}</title>
+        <!-- Material Design Components CSS -->
+        <link href="https://unpkg.com/material-components-web@latest/dist/material-components-web.min.css" rel="stylesheet">
+        <!-- Material Icons -->
+        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+        <!-- Roboto Font -->
+        <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
         {% block stylesheets %}
         {% endblock %}
 
     </head>
     <body>
-        {% block body %}{% endblock %}
+        <header data-turbo-permanent>
+            {{ include('includes/_sidebar.html.twig') }}
+        </header>
 
-        {% block javascripts %}
-            {% block importmap %}{{ importmap('app') }}{% endblock %}
-        {% endblock %}
+        <main class="main-content">
+            {% block body %}{% endblock %}
+
+            <script>
+            document.addEventListener("turbo:load", initSidebar);
+
+            function initSidebar(){
+                if (!window.scriptsInitialized) {
+                    window.scriptsInitialized = true; 
+
+                    // Navigation functionality
+                    const menuButton = document.getElementById('menuButton');
+                    const sidenav = document.getElementById('sidenav');
+                    const backdrop = document.getElementById('backdrop');
+                    const navItems = document.querySelectorAll('.nav-item');
+
+                    // Toggle sidenav
+                    function toggleSidenav() {
+                        const isOpen = sidenav.classList.contains('open');
+                        
+                        if (isOpen) {
+                            closeSidenav();
+                        } else {
+                            openSidenav();
+                        }
+                    }
+
+                    function openSidenav() {
+                        sidenav.classList.add('open');
+                        backdrop.classList.add('show');
+                        document.body.style.overflow = 'hidden'; // Prevent body scroll
+                    }
+
+                    function closeSidenav() {
+                        sidenav.classList.remove('open');
+                        backdrop.classList.remove('show');
+                        document.body.style.overflow = ''; // Restore body scroll
+                    }
+
+                    // Event listeners
+                    menuButton.addEventListener('click', toggleSidenav);
+                    backdrop.addEventListener('click', closeSidenav);
+
+                    // Close sidenav on ESC key
+                    document.addEventListener('keydown', function(event) {
+                        if (event.key === 'Escape' && sidenav.classList.contains('open')) {
+                            closeSidenav();
+                        }
+                    });
+
+                    // Handle nav item clicks
+                    navItems.forEach(item => {
+                        item.addEventListener('click', function(e) {
+                            
+                            // Remove active class from all items
+                            navItems.forEach(navItem => navItem.classList.remove('active'));
+                            
+                            // Add active class to clicked item
+                            this.classList.add('active');
+                            
+                            // Close sidenav on mobile after selection
+                            if (window.innerWidth < 1024) {
+                                closeSidenav();
+                            }
+                        });
+                    });
+                }
+            }
+            </script>
+
+            {% block javascripts %}
+                {% block importmap %}{{ importmap('app') }}{% endblock %}
+            {% endblock %}
+        </main>
     </body>
 </html>

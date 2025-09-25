@@ -1,12 +1,24 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}New Reading{% endblock %}
+{% block title %}New Read{% endblock %}
 
 {% block body %}
-    <h1>Starting a new reading</h1>
+  <section id="create-section" class="content-section active">
+    <div class="page-header">
+      <h1 class="page-title">Add a new Read</h1>
+    </div>
 
+    <div class="md-card">
+      {% if form is defined %}
+        {{ include('status/_form.html.twig',  {'form': form, 'button_label': 'Add'} ) }}
+      {% else %}
+      {% endif %}
+    </div>
+  </section>
 
-    {{ include('status/_form.html.twig') }}
-
-    <a href="{{ path('app_status_index') }}">back to list</a>
+  <script>
+    function goBackCreate() {
+      window.location.href = "{{ path('app_status_index') }}"
+    }
+  </script>
 {% endblock %}

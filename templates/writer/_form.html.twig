@@ -1,4 +1,23 @@
-{{ form_start(form) }}
-    {{ form_widget(form) }}
-    <button class="btn">{{ button_label|default('Save') }}</button>
+{{ form_start(form, {'attr': {'id': 'writerForm', 'class': 'md-form'}} ) }}
+
+    <div class="form-row">
+        {% for field in form %}
+            {% if field.vars.name != '_token' %}
+                <div class="md-input-group">
+                    {{ form_widget(field, {'attr': {'class': 'md-input'}}) }}
+                    {{ form_label(field, null, {'label_attr': {'class': 'md-label'}}) }}
+
+                    {{ form_errors(field, {'attr': {'class': 'invalid-feedback'}}) }}
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+    {{ form_rest(form) }} {# Renders _token and other hidden fields #}
+
+    <div class="form-actions">
+        {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+            <button type="button" class="md-button md-button--text" onclick="{% if button_label == 'Update' %}goBackEdit(){% else %}goBackCreate(){% endif %}">Cancel</button>
+        {% endif %}
+        <button type="submit" class="md-button md-button--primary">{{ button_label|default('Save') }}</button>
+    </div>
 {{ form_end(form) }}
