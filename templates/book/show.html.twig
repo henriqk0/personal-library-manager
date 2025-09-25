@@ -1,30 +1,86 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Book{% endblock %}
+{% block title %}View Book{% endblock %}
 
 {% block body %}
-    <h1>Book</h1>
+  <!-- Detail View Section -->
+  <section id="detail-section" class="content-section active">
+    <div class="page-header">
+      <button class="md-button md-button--text" onclick="goBack()">
+        <span class="material-icons">arrow_back</span>
+        Back
+      </button>
+      <h1 class="page-title">Book Details</h1>
+      <button class="md-button md-button--primary" onclick="goEdit()">
+        <span class="material-icons">edit</span>
+        Edit
+      </button>
+    </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ book.id }}</td>
-            </tr>
-            <tr>
-                <th>Title</th>
-                <td>{{ book.title }}</td>
-            </tr>
-            <tr>
-                <th>Num_pages</th>
-                <td>{{ book.numPages }}</td>
-            </tr>
-        </tbody>
-    </table>
+    <div class="detail-container">
+      <div class="md-card detail-card">
+        <div class="detail-header">
+          <div class="avatar-large">
+            <span class="material-icons">book</span>
+          </div>
+          <div class="detail-info">
+            <h2 class="detail-name">{{ book.title }}</h2>
+            <p class="detail-email">{{ book.writer }}</p>
+          </div>
+        </div>
 
-    <a href="{{ path('app_book_index') }}">back to list</a>
+        <div class="detail-content">
+          <div class="detail-section">
+            <h3 class="section-title">Book Data</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Book</span>
+                <span class="detail-value">{{ book.title }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Pages</span>
+                <span class="detail-value">{{ book.getNumPages() }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Writer</span>
+                <span class="detail-value">{{ book.writer }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <a href="{{ path('app_book_edit', {'id': book.id}) }}">edit</a>
 
-    {{ include('book/_delete_form.html.twig') }}
+  <!-- Update View Section -->
+  <section id="create-section" class="content-section">
+    <div class="page-header">
+      <h1 class="page-title">Edit Book</h1>
+    </div>
+
+    <div class="md-card">
+        {% if form is defined %}
+            {{ include('book/_form.html.twig',  {'form': form, 'button_label': 'Update'} ) }}
+        {% else %}
+        {% endif %}
+    </div>
+  </section>
+
+
+  <script>
+    function goEdit() {
+      document.title = "Edit Book";
+      document.getElementById('detail-section').classList.remove("active");
+      document.getElementById('create-section').classList.add("active");
+    }
+    function goBackEdit() {
+      document.title = "View Book";
+      document.getElementById('create-section').classList.remove("active");
+      document.getElementById('detail-section').classList.add("active");
+    }
+    function goBack() {
+      window.location.href = "{{ path('app_book_index') }}"
+    }
+  </script>
 {% endblock %}

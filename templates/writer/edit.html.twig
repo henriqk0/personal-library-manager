@@ -3,11 +3,22 @@
 {% block title %}Edit Writer{% endblock %}
 
 {% block body %}
-    <h1>Edit Writer</h1>
+  <section id="create-section" class="content-section active">
+    <div class="page-header">
+      <h1 class="page-title">Edit Writer</h1>
+    </div>
 
-    {{ include('writer/_form.html.twig', {'button_label': 'Update'}) }}
+    <div class="md-card">
+      {% if form is defined %}
+        {{ include('writer/_form.html.twig',  {'form': form, 'button_label': 'Update'} ) }}
+      {% else %}
+      {% endif %}
+    </div>
+  </section>
 
-    <a href="{{ path('app_writer_index') }}">back to list</a>
-
-    {{ include('writer/_delete_form.html.twig') }}
+  <script>
+    function goBackEdit() {
+      window.location.href = "{{ path('app_writer_index') }}"
+    }
+  </script>
 {% endblock %}

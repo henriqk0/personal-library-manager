@@ -4,11 +4,11 @@ namespace App\Form;
 
 use App\Entity\Book;
 use App\Entity\Status;
-use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\DateTimeType;
 
 class StatusType extends AbstractType
 {
@@ -22,7 +22,12 @@ class StatusType extends AbstractType
         if ($options['updating']) {
             $builder
                 ->add('current_page')
-                ->add(child: 'starting_date', options: ['label' => 'Starting date']);
+                ->add(child: 'starting_date', type:DateTimeType::class, 
+                    options: [
+                        'label' => 'Starting date',
+                        'widget' => 'single_text',
+                    ]
+                );
         }
     }
 

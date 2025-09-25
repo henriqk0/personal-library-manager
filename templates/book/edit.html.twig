@@ -3,11 +3,22 @@
 {% block title %}Edit Book{% endblock %}
 
 {% block body %}
-    <h1>Edit Book</h1>
+  <section id="create-section" class="content-section active">
+    <div class="page-header">
+      <h1 class="page-title">Edit Book</h1>
+    </div>
 
-    {{ include('book/_form.html.twig', {'button_label': 'Update'}) }}
+    <div class="md-card">
+      {% if form is defined %}
+        {{ include('book/_form.html.twig',  {'form': form, 'button_label': 'Update'} ) }}
+      {% else %}
+      {% endif %}
+    </div>
+  </section>
 
-    <a href="{{ path('app_book_index') }}">back to list</a>
-
-    {{ include('book/_delete_form.html.twig') }}
+  <script>
+    function goBackEdit() {
+      window.location.href = "{{ path('app_book_index') }}"
+    }
+  </script>
 {% endblock %}

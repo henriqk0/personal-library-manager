@@ -1,34 +1,82 @@
 {% extends 'base.html.twig' %}
 
-{% block title %}Writer{% endblock %}
+{% block title %}View Writer{% endblock %}
 
 {% block body %}
-    <h1>Writer</h1>
+  <!-- Detail View Section -->
+  <section id="detail-section" class="content-section active">
+    <div class="page-header">
+      <button class="md-button md-button--text" onclick="goBack()">
+        <span class="material-icons">arrow_back</span>
+        Back
+      </button>
+      <h1 class="page-title">Writer Details</h1>
+      <button class="md-button md-button--primary" onclick="goEdit()">
+        <span class="material-icons">edit</span>
+        Edit
+      </button>
+    </div>
 
-    <table class="table">
-        <tbody>
-            <tr>
-                <th>Id</th>
-                <td>{{ writer.id }}</td>
-            </tr>
-            <tr>
-                <th>Name</th>
-                <td>{{ writer.name }}</td>
-            </tr>
-            <tr>
-                <th>Birthdate</th>
-                {% if writer.isBirthBeforeChrist() %}
-                    <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }} B.C.</td>
-                {% else %}
-                    <td>{{ writer.birthdate ? writer.birthdate|date('Y-m-d') : '' }} A.D.</td>
-                {% endif %}
-            </tr>
-        </tbody>
-    </table>
+    <div class="detail-container">
+      <div class="md-card detail-card">
+        <div class="detail-header">
+          <div class="avatar-large">
+            <span class="material-icons">person</span>
+          </div>
+          <div class="detail-info">
+            <h2 class="detail-name">{{ writer.name }}</h2>
+            <p class="detail-email">{{ writer.birthdate.format('Y-m-d ') }}{% if writer.isBirthBeforeChrist %}(BC){% else %}(AD){% endif%}</p>
+          </div>
+        </div>
 
-    <a href="{{ path('app_writer_index') }}">back to list</a>
+        <div class="detail-content">
+          <div class="detail-section">
+            <h3 class="section-title">Book Data</h3>
+            <div class="detail-grid">
+              <div class="detail-item">
+                <span class="detail-label">Name</span>
+                <span class="detail-value">{{ writer.name }}</span>
+              </div>
+              <div class="detail-item">
+                <span class="detail-label">Birthdate</span>
+                <span class="detail-value">{{ writer.birthdate.format('Y-m-d ') }}{% if writer.isBirthBeforeChrist %}(BC){% else %}(AD){% endif%}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
 
-    <a href="{{ path('app_writer_edit', {'id': writer.id}) }}">edit</a>
 
-    {{ include('writer/_delete_form.html.twig') }}
+  <!-- Update View Section -->
+  <section id="create-section" class="content-section">
+    <div class="page-header">
+      <h1 class="page-title">Edit Writer</h1>
+    </div>
+
+    <div class="md-card">
+        {% if form is defined %}
+            {{ include('writer/_form.html.twig',  {'form': form, 'button_label': 'Update'} ) }}
+        {% else %}
+        {% endif %}
+    </div>
+  </section>
+
+
+  <script>
+    function goEdit() {
+      document.title = "Edit Read";
+      document.getElementById('detail-section').classList.remove("active");
+      document.getElementById('create-section').classList.add("active");
+    }
+    function goBackEdit() {
+      document.title = "My Read";
+      document.getElementById('create-section').classList.remove("active");
+      document.getElementById('detail-section').classList.add("active");
+    }
+    function goBack() {
+      window.location.href = "{{ path('app_writer_index') }}"
+    }
+  </script>
 {% endblock %}

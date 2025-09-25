@@ -6,6 +6,7 @@ use App\Entity\Writer;
 use Symfony\Component\Form\AbstractType;
 use Symfony\Component\Form\FormBuilderInterface;
 use Symfony\Component\OptionsResolver\OptionsResolver;
+use Symfony\Component\Form\Extension\Core\Type\DateType;
 
 class WriterType extends AbstractType
 {
@@ -13,7 +14,11 @@ class WriterType extends AbstractType
     {
         $builder
             ->add('name')
-            ->add('birthdate')
+            ->add(child: 'birthdate', type:DateType::class, 
+                    options: [
+                        'widget' => 'single_text',
+                    ]
+                )
             ->add('birth_before_christ')
         ;
     }

@@ -3,9 +3,24 @@
 {% block title %}New Writer{% endblock %}
 
 {% block body %}
-    <h1>Create new Writer</h1>
+  <section id="create-section" class="content-section active">
+    <div class="page-header">
+      <h1 class="page-title">Add a new Writer</h1>
+    </div>
 
-    {{ include('writer/_form.html.twig') }}
+    <div class="md-card">
+      {% if form is defined %}
+        {{ include('writer/_form.html.twig',  {'form': form, 'button_label': 'Add'} ) }}
+      {% else %}
+      {% endif %}
+    </div>
+  </section>
 
-    <a href="{{ path('app_writer_index') }}">back to list</a>
+  {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
+    <script>
+      function goBackCreate() {
+        window.location.href = "{{ path('app_writer_index') }}"
+      }
+    </script>
+  {% endif %}
 {% endblock %}

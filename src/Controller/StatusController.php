@@ -11,13 +11,18 @@ use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\IsGranted;
-
+use Symfony\Component\Routing\RouterInterface;
+use Symfony\Component\Security\Csrf\CsrfTokenManagerInterface;
 
 final class StatusController extends AbstractController
 {
+    private RouterInterface $_router;
+    private CsrfTokenManagerInterface $_csrfTokenManager;
     private $_em;
-    public function __construct(EntityManagerInterface $em){
+    public function __construct(EntityManagerInterface $em, CsrfTokenManagerInterface $csrf, RouterInterface $router){
         $this->_em = $em;
+        $this->_router = $router;
+        $this->_csrfTokenManager = $csrf;
     }
 
     #[Route('/read/new', name: 'app_status_new', methods: ['GET', 'POST'])]
@@ -51,18 +56,43 @@ final class StatusController extends AbstractController
     #[Route(path:'/', name: 'app_status_index', methods: ['GET'])]
     public function index(StatusRepository $statusRepository): Response
     {
+        $statuses = $statusRepository->findBy(['reader' => $this->getUser()]);
+
+        $statusesData = array_map(function ($status){
+            return [
+                'id' => $status->getId(),
+                'title' => $status->getBook()->getTitle(),
+                'pages' => $status->getBook()->getNumPages(),
+                'current'=> $status->getCurrentPage(),
+                'deleteUrl' => $this->_router->generate('app_status_delete', ['id' => $status->getId()]),
+                'csrfToken' => $this->_csrfTokenManager->getToken('delete' . $status->getId())->getValue(),
+            ];
+        }, $statuses);
+
         return $this->render('status/index.html.twig', [
-            'statuses' => $statusRepository->findBy(['reader' => $this->getUser()]),
+            'statusJson'=> json_encode($statusesData),
         ]);
     }
 
     
-    #[Route(path:'/read/{id}', name:'app_status_show', methods: ['GET'])]
+    #[Route(path:'/read/{id}', name:'app_status_show', methods: ['GET', 'POST'])]
     #[IsGranted('view', 'status', 'Read not found', 404)]
-    public function show(Status $status): Response
+    public function show(Request $request, Status $status): Response
     {
+        # duplicating the code of the method for editing in order to add an editing session on the same screen 
+        # CHANGE EDIT TO API, LATER
+        $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
+        $form->handleRequest($request);
+
+        if ($form->isSubmitted() && $form->isValid()) {
+            $this->_em->flush();
+
+            return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
+        }
+
         return $this->render('status/show.html.twig', [
             'status' => $status,
+            'form' => $form->createView(),
         ]);
     }
 
@@ -81,11 +111,11 @@ final class StatusController extends AbstractController
 
         return $this->render('status/edit.html.twig', [
             'status' => $status,
-            'form' => $form,
+            'form' => $form->createView(),
         ]);
     }
 
-    #[Route(path:'/read/{id}', name:'app_status_delete', methods: ['POST'])]
+    #[Route(path:'/read/{id}/delete', name:'app_status_delete', methods: ['POST'])]
     #[IsGranted('delete', 'status', 'Read not found', 404)]
     public function delete(Request $request, Status $status): Response
     {
