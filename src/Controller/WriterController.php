@@ -8,6 +8,7 @@ use App\Repository\WriterRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\Security\Http\Attribute\IsGranted;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Security\Core\Security;
 use Symfony\Component\Routing\Attribute\Route;
@@ -31,6 +32,7 @@ final class WriterController extends AbstractController
     }
 
     #[Route(name: 'app_writer_index', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function index(WriterRepository $writerRepository): Response
     {
         $writers = $writerRepository->findAll();
@@ -78,6 +80,7 @@ final class WriterController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_writer_show', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function show(Request $request, Writer $writer): Response
     {
         $form = $this->createForm(WriterType::class, $writer);
@@ -96,6 +99,7 @@ final class WriterController extends AbstractController
     }
 
     #[Route('/{id}/edit', name: 'app_writer_edit', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function edit(Request $request, Writer $writer, ): Response
     {
         $form = $this->createForm(WriterType::class, $writer);
@@ -114,6 +118,7 @@ final class WriterController extends AbstractController
     }
 
     #[Route('/{id}/delete', name: 'app_writer_delete', methods: ['POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function delete(Request $request, Writer $writer): Response
     {
         if ($this->isCsrfTokenValid('delete'.$writer->getId(), $request->getPayload()->getString('_token'))) {

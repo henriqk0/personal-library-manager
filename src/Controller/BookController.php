@@ -28,6 +28,7 @@ final class BookController extends AbstractController
     }
 
     #[Route(name: 'app_book_index', methods: ['GET'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function index(BookRepository $bookRepository): Response
     {
         $books = $bookRepository->findAll();
@@ -75,6 +76,7 @@ final class BookController extends AbstractController
     }
 
     #[Route('/{id}', name: 'app_book_show', methods: ['GET', 'POST'])]
+    #[IsGranted('ROLE_ADMIN')]
     public function show(Request $request, Book $book): Response
     {
         $form = $this->createForm(BookType::class, $book);
