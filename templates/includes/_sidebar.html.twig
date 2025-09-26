@@ -60,7 +60,7 @@
     {% endif %}
 
     <li>
-      <a href="{{ path('app_logout')}} " class="nav-item">
+      <a id="logout-ops" class="nav-item">
         <span class="material-icons">exit_to_app</span>
         <span class="nav-item-text">Sign out</span>
       </a>
@@ -71,6 +71,9 @@
 <script>
   document.getElementById('read-ops').addEventListener('click', function(){
     window.location.href = "{{ path('app_status_index') }}"
+  });
+  document.getElementById('logout-ops').addEventListener('click', function(){
+    window.location.href = "{{ path('app_logout') }}"
   });
   {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
     document.getElementById('book-ops').addEventListener('click', function(){
