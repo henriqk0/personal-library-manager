@@ -1,7 +1,188 @@
-{% extends 'base.html.twig' %}
+{% extends 'base-fullscreen.html.twig' %}
 
-{% block title %}Hello UserController!{% endblock %}
+{% block title %}Sing up{% endblock %}
+
 
 {% block body %}
-    {{ form(registration_form )}}
+    <div class="login-container">
+        <div class="login-card">
+            <div class="login-header">
+                <div class="login-icon">
+                    <i class="material-icons">app_registration</i>
+                </div>
+                <h1 class="login-title">Create your free account</h1>
+                <p class="login-subtitle">Sign up for Personal Library</p>
+            </div>
+
+            <form name="user" method="post" class="login-form" >
+                <!-- Email Field -->
+                <div class="input-group">
+                    <div class="input-container">
+                        <i class="material-icons input-icon">email</i>
+                        <input 
+                            type="text"
+                            id="user_email"
+                            name="user[email]"
+                            required="required"
+                            maxlength="180"
+                            value="{{ registration_form.email.vars.value|e }}"
+                        >
+                        <label for="user_email" class="required">Email</label>
+                        <div class="input-underline"></div>
+                    </div>
+                </div>
+
+                <!-- Password Field -->
+                <div class="input-group">
+                    <div class="input-container">
+                        <i class="material-icons input-icon">lock</i>
+                        <input 
+                            type="password" 
+                            id="user_password" 
+                            name="user[password]" 
+                            required="required"
+                            value="{{ registration_form.password.vars.value|e }}"
+                        >
+                        <label for="user_password">Password</label>
+                        <button type="button" class="password-toggle" onclick="togglePassword()">
+                            <i class="material-icons" id="passwordIcon">visibility_off</i>
+                        </button>
+                        <div class="input-underline"></div>
+                    </div>
+                </div>
+
+                <input 
+                    type="hidden" 
+                    id="user__token" 
+                    name="user[_token]" 
+                    value="{{ registration_form._token.vars.value|e }}"
+                >
+
+                <!-- Submit Button -->
+                <button class="login-button" type="submit">
+                    <span class="button-text">Sign Up</span>
+                    <i class="material-icons button-icon">arrow_forward</i>
+                </button>
+
+                <div class="login-links">
+                    <p style="margin-top:18px;color:#424242;font-size:14px;">Already have an account?</p>
+                    <a onclick="goSignIn()" class="forgot-password">Sign in</a>
+                </div>
+            </form>
+
+        </div>
+
+        <!-- Background Elements -->
+        <div class="background-shapes">
+            <div class="shape shape-1"></div>
+            <div class="shape shape-2"></div>
+            <div class="shape shape-3"></div>
+        </div>
+    </div>
+
+    <script>
+      function togglePassword() {
+        const passwordInput = document.getElementById("user_password")
+        const passwordIcon = document.getElementById("passwordIcon")
+
+        if (passwordInput.type === "password") {
+          passwordInput.type = "text"
+          passwordIcon.textContent = "visibility"
+        } else {
+          passwordInput.type = "password"
+          passwordIcon.textContent = "visibility_off"
+        }
+      }
+
+      function goSignIn() {
+        window.location.href = "{{ path('login') }}"
+      }
+
+      // Initialize the registration page
+      document.addEventListener("DOMContentLoaded", () => {
+        const loginForm = document.querySelector(".login-form")
+
+        if (loginForm) {
+          // Input focus animations and validation
+          const inputs = document.querySelectorAll(".input-container input")
+
+          inputs.forEach((input) => {
+            // Handle initial state for pre-filled inputs
+            if (input.value) {
+              input.nextElementSibling.style.transform = "translateY(-37px) scale(0.8)"
+              input.nextElementSibling.style.color = "#005eb8"
+            }
+
+            input.addEventListener("focus", function () {
+              this.parentElement.classList.add("focused")
+            })
+
+            input.addEventListener("blur", function () {
+              this.parentElement.classList.remove("focused")
+            })
+
+            input.addEventListener("input", function () {
+              if (this.value) {
+                this.nextElementSibling.style.transform = "translateY(-37px) scale(0.8)"
+                this.nextElementSibling.style.color = "#005eb8"
+              } else {
+                this.nextElementSibling.style.transform = "translateY(-50%) scale(1)"
+                this.nextElementSibling.style.color = "#757575"
+              }
+            })
+          })
+
+          // Form submission with loading state
+          loginForm.addEventListener("submit", function (e) {
+            const submitButton = this.querySelector(".login-button")
+            const buttonText = submitButton.querySelector(".button-text")
+            const buttonIcon = submitButton.querySelector(".button-icon")
+
+            // Add loading state
+            submitButton.disabled = true
+            buttonText.textContent = "Signing Up..."
+            buttonIcon.textContent = "hourglass_empty"
+            buttonIcon.style.animation = "spin 1s linear infinite"
+
+            // Remove loading state after form processes (can remove this in production)
+            setTimeout(() => {
+              submitButton.disabled = false
+              buttonText.textContent = "Sign Up"
+              buttonIcon.textContent = "arrow_forward"
+              buttonIcon.style.animation = ""
+            }, 2000)
+          })
+
+          // Show error message if error exists
+          const errorContainer = document.getElementById("errorContainer")
+          if (errorContainer && errorContainer.querySelector("#errorText").textContent.trim()) {
+            errorContainer.style.display = "block"
+
+            // Add shake animation to the card
+            const loginCard = document.querySelector(".login-card")
+            loginCard.style.animation = "shake 0.5s ease-in-out"
+
+            setTimeout(() => {
+              loginCard.style.animation = ""
+            }, 500)
+          }
+
+          // Email validation
+          const emailInput = document.getElementById("user_email")
+          if (emailInput) {
+            emailInput.addEventListener("blur", function () {
+              const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+              if (this.value && !emailRegex.test(this.value)) {
+                this.style.borderColor = "#d32f2f"
+                this.nextElementSibling.style.color = "#d32f2f"
+              } else {
+                this.style.borderColor = "#e0e0e0"
+                this.nextElementSibling.style.color = "#757575"
+              }
+            })
+          }
+        }
+      })
+    </script>
+
 {% endblock %}
