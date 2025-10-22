@@ -1,0 +1,656 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Readings Overview{% endblock %}
+
+{% block stylesheets %}
+<style>
+.tablist {
+  display: flex;
+  gap: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.tablist button {
+  flex: 1;
+  padding: 16px 24px;
+  border: none;
+  background-color: transparent;
+  color: #757575;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+
+.tablist button:hover {
+  background-color: rgba(0, 94, 184, 0.08);
+  color: #005eb8;
+}
+
+.tablist button.active {
+  color: #005eb8;
+  border-bottom-color: #005eb8;
+  background-color: rgba(0, 94, 184, 0.05);
+}
+
+.content-section {
+  display: none;
+}
+
+.content-section.active {
+  display: block;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 48px;
+  font-weight: 300;
+  color: #005eb8;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #757575;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  min-width: 0;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #212121;
+  margin-bottom: 16px;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+#status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#status-list li {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+#status-list li:hover {
+  background-color: #f5f5f5;
+}
+
+#status-list li:last-child {
+  border-bottom: none;
+}
+
+.book-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.book-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-title {
+  font-weight: 500;
+  color: #212121;
+  margin-bottom: 8px;
+}
+
+.book-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #757575;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 80px;
+  max-width: 200px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #005eb8 0%, #0074cc 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  color: #757575;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #757575;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tablist button {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .book-stats {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    max-width: none;
+  }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-header">
+  <h1 class="page-title">Readings Overview</h1>
+</div>
+
+<nav class="tablist" role="tablist" aria-label="Reading sections">
+  <button role="tab" aria-selected="true" aria-controls="overview-section" id="overview-tab" class="active">
+    Overview
+  </button>
+  <button role="tab" aria-selected="false" aria-controls="current-books-section" id="readings-tab">
+    Readings
+  </button>
+  <button role="tab" aria-selected="false" aria-controls="analytics-section" id="analytics-tab">
+    Analytics
+  </button>
+</nav>
+
+<section id="overview-section" class="content-section active" role="tabpanel" aria-labelledby="overview-tab">
+  <div class="stats-grid">
+    <div class="stat-card">
+      <span class="stat-number" id="finished-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="finished-num-display-label">Books read</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number" id="current-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="current-num-display-label">Active readings</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number" id="avg-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="avg-num-display-label">Avg. daily pages</span>
+    </div>
+  </div>
+
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2 class="chart-title">Monthly Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="monthly-reads-chart" aria-label="Bar chart showing books completed per month"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h2 class="chart-title">Current Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="current-read-pages-chart" aria-label="Pie chart showing reading progress for active books"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="current-books-section" class="content-section" role="tabpanel" aria-labelledby="readings-tab">
+  <div class="md-card">
+    <div class="table-header">
+      <h2 class="chart-title">Currently Reading</h2>
+    </div>
+    <ul id="status-list" aria-live="polite" aria-busy="true">
+      <li class="loading-spinner">Loading your reading list...</li>
+    </ul>
+  </div>
+</section>
+
+<section id="analytics-section" class="content-section" role="tabpanel" aria-labelledby="analytics-tab">
+  <div class="charts-grid">
+    <div class="chart-card">
+      <h2 class="chart-title">Monthly Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="analytics-monthly-chart" aria-label="Bar chart showing books completed per month"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card">
+      <h2 class="chart-title">Current Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="analytics-pie-chart" aria-label="Pie chart showing reading progress for active books"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Tab navigation
+const tabs = document.querySelectorAll('.tablist button');
+const sections = document.querySelectorAll('.content-section');
+
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => {
+    // Update tabs
+    tabs.forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+
+    // Update sections
+    sections.forEach(s => s.classList.remove('active'));
+    sections[index].classList.add('active');
+  });
+
+  // Keyboard navigation
+  tab.addEventListener('keydown', (e) => {
+    let newIndex = index;
+    if (e.key === 'ArrowRight') {
+      newIndex = (index + 1) % tabs.length;
+    } else if (e.key === 'ArrowLeft') {
+      newIndex = (index - 1 + tabs.length) % tabs.length;
+    } else {
+      return;
+    }
+    tabs[newIndex].click();
+    tabs[newIndex].focus();
+    e.preventDefault();
+  });
+});
+
+// Chart variables
+let monthlyChart = null;
+let pieChart = null;
+let analyticsMonthlyChart = null;
+let analyticsPieChart = null;
+
+// Fetch and display data
+fetch('/api/overview')
+  .then(res => res.json())
+  .then(data => {
+    console.log("API DATA:", data);
+    
+    // Update status list
+    const list = document.getElementById('status-list');
+    list.innerHTML = '';
+    list.setAttribute('aria-busy', 'false');
+
+    let finishedCount = 0;
+    let currentCount = 0;
+    let sumPagesRead = 0;
+    let firstDate = null;
+    const actualDate = new Date();
+    const currentBooks = [];
+    const monthlyData = {};
+
+    data.forEach(item => {
+      sumPagesRead += item.current;
+
+      if (!firstDate) {
+        firstDate = item.start_date;
+      }
+
+      if (item.pages !== item.current) {
+        currentCount++;
+        currentBooks.push({
+          title: item.title,
+          pages: item.pages,
+          current: item.current
+        });
+        
+        const li = document.createElement('li');
+        const progress = Math.round((item.current / item.pages) * 100);
+        li.innerHTML = `
+          <div class="book-item">
+            <span class="book-icon">📖</span>
+            <div class="book-content">
+              <div class="book-title">${item.title}</div>
+              <div class="book-stats">
+                <div class="progress-bar-container">
+                  <div class="progress-bar-fill" style="width: ${progress}%"></div>
+                </div>
+                <span class="progress-text">${item.current}/${item.pages} pages (${progress}%)</span>
+              </div>
+            </div>
+          </div>
+        `;
+        list.appendChild(li);
+      } else {
+        finishedCount++;
+        
+        // Group by month for chart
+        const finishDate = new Date(item.finish_date || item.start_date);
+        const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      }
+    });
+
+    // Show empty state if no current books
+    if (currentCount === 0) {
+      list.innerHTML = `
+        <li class="empty-state">
+          <div class="empty-state-icon">📚</div>
+          <div>No books currently being read</div>
+        </li>
+      `;
+    }
+
+    // Calculate average pages per day
+    const diffInDays = firstDate 
+      ? Math.floor((actualDate - new Date(firstDate)) / (1000 * 60 * 60 * 24))
+      : 0;
+
+    // Update stat cards
+    const finishedNumElement = document.getElementById('finished-num-display');
+    const finishedNumElementLabel = document.getElementById('finished-num-display-label');
+    finishedNumElement.textContent = finishedCount;
+    finishedNumElementLabel.textContent = finishedCount === 1 ? 'Book read' : 'Books read';
+
+    const currentNumElement = document.getElementById('current-num-display');
+    const currentNumElementLabel = document.getElementById('current-num-display-label');
+    currentNumElement.textContent = currentCount;
+    currentNumElementLabel.textContent = currentCount === 1 ? 'Active reading' : 'Active readings';
+
+    const avgNumElement = document.getElementById('avg-num-display');
+    const avgPages = diffInDays > 0 ? Math.floor(sumPagesRead / diffInDays) : 0;
+    avgNumElement.textContent = avgPages;
+
+    // Create monthly bar chart
+    const sortedMonths = Object.keys(monthlyData).sort();
+    const monthLabels = sortedMonths.map(key => {
+      const [year, month] = key.split('-');
+      return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    });
+    const monthValues = sortedMonths.map(key => monthlyData[key]);
+
+    const monthlyCtx = document.getElementById('monthly-reads-chart');
+    if (monthlyChart) monthlyChart.destroy();
+    monthlyChart = new Chart(monthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: monthLabels.length > 0 ? monthLabels : ['No data'],
+        datasets: [{
+          label: 'Books Completed',
+          data: monthValues.length > 0 ? monthValues : [0],
+          backgroundColor: 'rgba(0, 94, 184, 0.8)',
+          borderColor: 'rgba(0, 94, 184, 1)',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            },
+            title: {
+              display: true,
+              text: 'Books Completed'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Month'
+            }
+          }
+        }
+      }
+    });
+
+    // Create pie chart for current reading progress
+    const pieLabels = currentBooks.map(book => book.title);
+    const pieData = currentBooks.map(book => book.current);
+    const colors = [
+      'rgba(0, 94, 184, 0.8)',
+      'rgba(0, 116, 204, 0.8)',
+      'rgba(33, 150, 243, 0.8)',
+      'rgba(100, 181, 246, 0.8)',
+      'rgba(144, 202, 249, 0.8)'
+    ];
+
+    const pieCtx = document.getElementById('current-read-pages-chart');
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(pieCtx, {
+      type: 'pie',
+      data: {
+        labels: pieLabels.length > 0 ? pieLabels : ['No active readings'],
+        datasets: [{
+          data: pieData.length > 0 ? pieData : [1],
+          backgroundColor: pieData.length > 0 ? colors.slice(0, pieData.length) : ['rgba(189, 189, 189, 0.3)'],
+          borderColor: 'white',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (pieData.length === 0) return 'No data';
+                const book = currentBooks[context.dataIndex];
+                const percentage = ((book.current / book.pages) * 100).toFixed(1);
+                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+    // Create the same charts for Analytics tab
+    const analyticsMonthlyCtx = document.getElementById('analytics-monthly-chart');
+    if (analyticsMonthlyChart) analyticsMonthlyChart.destroy();
+    analyticsMonthlyChart = new Chart(analyticsMonthlyCtx, {
+      type: 'bar',
+      data: {
+        labels: monthLabels.length > 0 ? monthLabels : ['No data'],
+        datasets: [{
+          label: 'Books Completed',
+          data: monthValues.length > 0 ? monthValues : [0],
+          backgroundColor: 'rgba(0, 94, 184, 0.8)',
+          borderColor: 'rgba(0, 94, 184, 1)',
+          borderWidth: 1,
+          borderRadius: 4
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            display: false
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              stepSize: 1
+            },
+            title: {
+              display: true,
+              text: 'Books Completed'
+            }
+          },
+          x: {
+            title: {
+              display: true,
+              text: 'Month'
+            }
+          }
+        }
+      }
+    });
+
+    const analyticsPieCtx = document.getElementById('analytics-pie-chart');
+    if (analyticsPieChart) analyticsPieChart.destroy();
+    analyticsPieChart = new Chart(analyticsPieCtx, {
+      type: 'pie',
+      data: {
+        labels: pieLabels.length > 0 ? pieLabels : ['No active readings'],
+        datasets: [{
+          data: pieData.length > 0 ? pieData : [1],
+          backgroundColor: pieData.length > 0 ? colors.slice(0, pieData.length) : ['rgba(189, 189, 189, 0.3)'],
+          borderColor: 'white',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                if (pieData.length === 0) return 'No data';
+                const book = currentBooks[context.dataIndex];
+                const percentage = ((book.current / book.pages) * 100).toFixed(1);
+                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    });
+
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+    document.getElementById('status-list').innerHTML = `
+      <li class="empty-state">
+        <div class="empty-state-icon">⚠️</div>
+        <div>Failed to load reading data</div>
+      </li>
+    `;
+  });
+</script>
+{% endblock %}
