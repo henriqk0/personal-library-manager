@@ -224,16 +224,19 @@
   letter-spacing: 0.5px;
 }
 
-.date-filter input[type="date"] {
+.date-range-input {
+  flex: 1;
+  min-width: 250px;
   padding: 8px 12px;
   border: 1px solid #e0e0e0;
   border-radius: 4px;
   font-size: 14px;
   background-color: #fafafa;
   transition: all 0.2s ease;
+  cursor: pointer;
 }
 
-.date-filter input[type="date"]:focus {
+.date-range-input:focus {
   outline: none;
   border-color: #005eb8;
   background-color: white;
@@ -427,12 +430,9 @@
 </div>
 
 <div class="date-filter">
-  <label class="date-filter-label" for="start-date">Filter Period:</label>
-  <input type="date" id="start-date" aria-label="Start date">
-  <span>to</span>
-  <input type="date" id="end-date" aria-label="End date">
-  <button class="date-filter-button" id="apply-filter">APPLY FILTER</button>
-  <button class="date-filter-button secondary" id="clear-filter">CLEAR</button>
+  <label class="date-filter-label" for="date-range">Filter Period:</label>
+  <input type="text" id="date-range" class="date-range-input" placeholder="Select date range" readonly aria-label="Date range filter">
+  <button class="date-filter-button secondary" id="clear-filter">Clear</button>
 </div>
 
 <nav class="tablist" role="tablist" aria-label="Reading sections">
@@ -542,20 +542,36 @@
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
 <script>
-// Global data storage
+// global data storage
 let allBooksData = [];
 let filteredData = [];
 let startDateFilter = null;
 let endDateFilter = null;
 
-// Chart variables
+// chart variables
 let monthlyChart = null;
 let pieChart = null;
 let analyticsMonthlyChart = null;
 let analyticsPieChart = null;
 
-// Tab navigation
+// initialize Flatpickr for date range
+const dateRangePicker = flatpickr("#date-range", {
+  mode: "range",
+  dateFormat: "Y-m-d",
+  onChange: function(selectedDates, dateStr, instance) {
+    if (selectedDates.length === 2) {
+      startDateFilter = selectedDates[0];
+      endDateFilter = new Date(selectedDates[1]);
+      endDateFilter.setHours(23, 59, 59, 999);
+      processData(allBooksData);
+    }
+  }
+});
+
+// tab navigation
 const tabs = document.querySelectorAll('.tablist button');
 const sections = document.querySelectorAll('.content-section');
 
@@ -588,27 +604,14 @@ tabs.forEach((tab, index) => {
 });
 
 // Date filter functionality
-document.getElementById('apply-filter').addEventListener('click', () => {
-  const startDate = document.getElementById('start-date').value;
-  const endDate = document.getElementById('end-date').value;
-  
-  if (startDate && endDate) {
-    startDateFilter = new Date(startDate);
-    endDateFilter = new Date(endDate);
-    endDateFilter.setHours(23, 59, 59, 999);
-    processData(allBooksData);
-  }
-});
-
 document.getElementById('clear-filter').addEventListener('click', () => {
-  document.getElementById('start-date').value = '';
-  document.getElementById('end-date').value = '';
+  dateRangePicker.clear();
   startDateFilter = null;
   endDateFilter = null;
   processData(allBooksData);
 });
 
-// Modal functionality
+// modal functionality
 const finishedBooksModal = document.getElementById('finished-books-modal');
 const currentBooksModal = document.getElementById('current-books-modal');
 
@@ -638,7 +641,19 @@ document.querySelectorAll('.modal-overlay').forEach(overlay => {
 
 function populateFinishedBooksModal() {
   const list = document.getElementById('finished-books-list');
-  const finishedBooks = filteredData.filter(item => item.pages === item.current);
+  const finishedBooks = filteredData.filter(item => {
+    if (item.pages !== item.current) return false;
+    
+    // check if finish_date is within filter range
+    if (item.finish_date) {
+      const finishDate = new Date(item.finish_date);
+      const isWithinFilter = !endDateFilter || finishDate <= endDateFilter;
+      return isWithinFilter;
+    }
+    
+    // if no finish_date but pages equal current, include it
+    return true;
+  });
   
   list.innerHTML = '';
   
@@ -739,11 +754,26 @@ function processData(data) {
       `;
       list.appendChild(li);
     } else {
-      finishedCount++;
-      
-      const finishDate = new Date(item.finish_date || item.start_date);
-      const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
-      monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      // only count as finished if finish_date is within filter range (or no filter)
+      if (item.finish_date) {
+        const finishDate = new Date(item.finish_date);
+        
+        // check if finish date is within filter range
+        const isWithinFilter = !endDateFilter || finishDate <= endDateFilter;
+        
+        if (isWithinFilter) {
+          finishedCount++;
+          
+          const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
+          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+        }
+      } else {
+        // if no finish_date but pages equal current, count it
+        finishedCount++;
+        const finishDate = new Date(item.start_date);
+        const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      }
     }
   });
 
@@ -797,9 +827,8 @@ function processData(data) {
   });
   const monthValues = sortedMonths.map(key => monthlyData[key]);
 
-  const monthlyCtx = document.getElementById('monthly-reads-chart');
-  if (monthlyChart) monthlyChart.destroy();
-  monthlyChart = new Chart(monthlyCtx, {
+  // create bar chart config
+  const barChartConfig = {
     type: 'bar',
     data: {
       labels: monthLabels.length > 0 ? monthLabels : ['No data'],
@@ -839,7 +868,17 @@ function processData(data) {
         }
       }
     }
-  });
+  };
+
+  // update Overview bar chart
+  const monthlyCtx = document.getElementById('monthly-reads-chart');
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(monthlyCtx, barChartConfig);
+
+  // update Analytics bar chart
+  const analyticsMonthlyCtx = document.getElementById('analytics-monthly-chart');
+  if (analyticsMonthlyChart) analyticsMonthlyChart.destroy();
+  analyticsMonthlyChart = new Chart(analyticsMonthlyCtx, JSON.parse(JSON.stringify(barChartConfig)));
 
   if (hasCurrentReadings) {
     const pieLabels = currentBooks.map(book => book.title);
@@ -852,131 +891,57 @@ function processData(data) {
       'rgba(144, 202, 249, 0.8)'
     ];
 
+    // create pie chart config
+    const pieChartConfig = {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieData,
+          backgroundColor: colors.slice(0, pieData.length),
+          borderColor: 'white',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const book = currentBooks[context.dataIndex];
+                const percentage = ((book.current / book.pages) * 100).toFixed(1);
+                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // update Overview pie chart
     const pieCtx = document.getElementById('current-read-pages-chart');
     if (pieChart) pieChart.destroy();
-    pieChart = new Chart(pieCtx, {
-      type: 'pie',
-      data: {
-        labels: pieLabels,
-        datasets: [{
-          data: pieData,
-          backgroundColor: colors.slice(0, pieData.length),
-          borderColor: 'white',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              padding: 15,
-              font: {
-                size: 12
-              }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const book = currentBooks[context.dataIndex];
-                const percentage = ((book.current / book.pages) * 100).toFixed(1);
-                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
-              }
-            }
-          }
-        }
-      }
-    });
+    pieChart = new Chart(pieCtx, pieChartConfig);
 
-    const analyticsMonthlyCtx = document.getElementById('analytics-monthly-chart');
-    if (analyticsMonthlyChart) analyticsMonthlyChart.destroy();
-    analyticsMonthlyChart = new Chart(analyticsMonthlyCtx, {
-      type: 'bar',
-      data: {
-        labels: monthLabels.length > 0 ? monthLabels : ['No data'],
-        datasets: [{
-          label: 'Books Completed',
-          data: monthValues.length > 0 ? monthValues : [0],
-          backgroundColor: 'rgba(0, 94, 184, 0.8)',
-          borderColor: 'rgba(0, 94, 184, 1)',
-          borderWidth: 1,
-          borderRadius: 4
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            display: false
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              stepSize: 1
-            },
-            title: {
-              display: true,
-              text: 'Books Completed'
-            }
-          },
-          x: {
-            title: {
-              display: true,
-              text: 'Month'
-            }
-          }
-        }
-      }
-    });
-
+    // update Analytics pie chart
     const analyticsPieCtx = document.getElementById('analytics-pie-chart');
     if (analyticsPieChart) analyticsPieChart.destroy();
-    analyticsPieChart = new Chart(analyticsPieCtx, {
-      type: 'pie',
-      data: {
-        labels: pieLabels,
-        datasets: [{
-          data: pieData,
-          backgroundColor: colors.slice(0, pieData.length),
-          borderColor: 'white',
-          borderWidth: 2
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: {
-            position: 'bottom',
-            labels: {
-              padding: 15,
-              font: {
-                size: 12
-              }
-            }
-          },
-          tooltip: {
-            callbacks: {
-              label: function(context) {
-                const book = currentBooks[context.dataIndex];
-                const percentage = ((book.current / book.pages) * 100).toFixed(1);
-                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
-              }
-            }
-          }
-        }
-      }
-    });
+    analyticsPieChart = new Chart(analyticsPieCtx, JSON.parse(JSON.stringify(pieChartConfig)));
   }
 }
 
-// Fetch and display data
+// fetch and display data
 fetch('/api/overview')
   .then(res => res.json())
   .then(data => {

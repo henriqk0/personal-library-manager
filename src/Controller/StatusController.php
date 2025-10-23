@@ -5,7 +5,6 @@ use App\Entity\Status;
 use App\Form\StatusType;
 use App\Repository\StatusRepository;
 use DateTime;
-use phpDocumentor\Reflection\Types\Null_;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -83,10 +82,21 @@ final class StatusController extends AbstractController
     {
         # duplicating the code of the method for editing in order to add an editing session on the same screen 
         # CHANGE EDIT TO API, LATER
-        $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
-        $form->handleRequest($request);
+        ($status->getCompletionDate() != Null) ?
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true, 'empty_data' => false])
+        : 
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
 
+        $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($status->getCurrentPage() === $status->getBook()->getNumPages() && $status->getCompletionDate() === Null) {
+                $status->setCompletionDate(new \DateTime());
+            }
+            else if ($status->getCompletionDate() != Null && $status->getCurrentPage() != $status->getBook()->getNumPages()) {
+                $status->setCompletionDate(null);
+            }
+
             $this->_em->flush();
 
             return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
@@ -110,10 +120,10 @@ final class StatusController extends AbstractController
         $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
 
-            if ($status->getCurrentPage() === $status->getBook()->getNumPages()) {
+            if ($status->getCurrentPage() === $status->getBook()->getNumPages() && $status->getCompletionDate() === Null) {
                 $status->setCompletionDate(new \DateTime());
             }
-            else if ($status->getCompletionDate() != Null) {
+            else if ($status->getCompletionDate() != Null && $status->getCurrentPage() != $status->getBook()->getNumPages()) {
                 $status->setCompletionDate(null);
             }
 
