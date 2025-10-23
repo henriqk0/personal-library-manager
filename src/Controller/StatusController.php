@@ -5,6 +5,7 @@ use App\Entity\Status;
 use App\Form\StatusType;
 use App\Repository\StatusRepository;
 use DateTime;
+use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Doctrine\ORM\EntityManagerInterface;
@@ -81,10 +82,21 @@ final class StatusController extends AbstractController
     {
         # duplicating the code of the method for editing in order to add an editing session on the same screen 
         # CHANGE EDIT TO API, LATER
-        $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
-        $form->handleRequest($request);
+        ($status->getCompletionDate() != Null) ?
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true, 'empty_data' => false])
+        : 
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
 
+        $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($status->getCurrentPage() === $status->getBook()->getNumPages() && $status->getCompletionDate() === Null) {
+                $status->setCompletionDate(new \DateTime());
+            }
+            else if ($status->getCompletionDate() != Null && $status->getCurrentPage() != $status->getBook()->getNumPages()) {
+                $status->setCompletionDate(null);
+            }
+
             $this->_em->flush();
 
             return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
@@ -100,10 +112,21 @@ final class StatusController extends AbstractController
     #[IsGranted('edit', 'status', 'Read not found', 404)]
     public function edit(Request $request, Status $status): Response
     {
-        $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
-        $form->handleRequest($request);
+        ($status->getCompletionDate() != Null) ?
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true, 'empty_data' => false])
+        : 
+            $form = $this->createForm(StatusType::class, $status, ['updating' => true]);
 
+        $form->handleRequest($request);
         if ($form->isSubmitted() && $form->isValid()) {
+
+            if ($status->getCurrentPage() === $status->getBook()->getNumPages() && $status->getCompletionDate() === Null) {
+                $status->setCompletionDate(new \DateTime());
+            }
+            else if ($status->getCompletionDate() != Null && $status->getCurrentPage() != $status->getBook()->getNumPages()) {
+                $status->setCompletionDate(null);
+            }
+
             $this->_em->flush();
 
             return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
@@ -126,5 +149,34 @@ final class StatusController extends AbstractController
         }
 
         return $this->redirectToRoute('app_status_index', [], Response::HTTP_SEE_OTHER);
+    }
+
+    #[Route(path:'overview', name:'app_overview', methods: ['GET'])]
+    public function dashboard(StatusRepository $statusRepository): Response
+    {   
+        return $this->render('status/overview.html.twig');
+    }
+
+    # starting change to api
+    #[Route(path:'api/overview', name:'api_overview')]
+    public function overviewApi(StatusRepository $statusRepository): JsonResponse
+    {   
+        $statuses = $statusRepository->findBy(['reader' => $this->getUser()]);
+
+        $statusesData = array_map(function ($status){
+            return [
+                'title' => $status->getBook()->getTitle(),
+                'pages' => $status->getBook()->getNumPages(),
+                'current'=> $status->getCurrentPage(),
+                'start_date'=> $status->getStartingDate(),
+                'finish_date'=> $status->getCompletionDate(),
+            ];
+        }, $statuses);  # finished status number will be processed in frontend 
+
+        usort($statusesData, function ($a, $b) {
+            return $a['start_date'] <=> $b['start_date'];
+        });
+
+        return $this->json($statusesData);
     }
 }

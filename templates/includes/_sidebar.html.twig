@@ -23,14 +23,12 @@
         <span class="nav-item-text">My Readings</span>
       </a>
     </li>
-    {# add in the future with the reading metrics
     <li>
-      <a href="#" class="nav-item">
+      <a id="overview-ops" class="nav-item {% if app.request.pathInfo starts with '/overview' %}active{% endif %}">
         <span class="material-icons">analytics</span>
-        <span class="nav-item-text">Analytics</span>
+        <span class="nav-item-text">Overview</span>
       </a>
     </li>
-    #}
     {% if is_granted('ROLE_ADMIN') or is_granted('ROLE_MANAGER') %}
     <li>
       <a id="book-ops" class="nav-item {% if app.request.pathInfo starts with '/book' %}active{% endif %}">
@@ -71,6 +69,9 @@
 <script>
   document.getElementById('read-ops').addEventListener('click', function(){
     window.location.href = "{{ path('app_status_index') }}"
+  });
+  document.getElementById('overview-ops').addEventListener('click', function(){
+    window.location.href = "{{ path('app_overview') }}"
   });
   document.getElementById('logout-ops').addEventListener('click', function(){
     window.location.href = "{{ path('app_logout') }}"

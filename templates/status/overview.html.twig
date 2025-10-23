@@ -1,0 +1,962 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Readings Overview{% endblock %}
+
+{% block stylesheets %}
+<style>
+.tablist {
+  display: flex;
+  gap: 0;
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+
+.tablist button {
+  flex: 1;
+  padding: 16px 24px;
+  border: none;
+  background-color: transparent;
+  color: #757575;
+  font-size: 14px;
+  font-weight: 500;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border-bottom: 2px solid transparent;
+  position: relative;
+}
+
+.tablist button:hover {
+  background-color: rgba(0, 94, 184, 0.08);
+  color: #005eb8;
+}
+
+.tablist button.active {
+  color: #005eb8;
+  border-bottom-color: #005eb8;
+  background-color: rgba(0, 94, 184, 0.05);
+}
+
+.content-section {
+  display: none;
+}
+
+.content-section.active {
+  display: block;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.stat-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  text-align: center;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.stat-number {
+  font-size: 48px;
+  font-weight: 300;
+  color: #005eb8;
+  margin-bottom: 8px;
+  display: block;
+}
+
+.stat-label {
+  font-size: 14px;
+  color: #757575;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.chart-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 24px;
+  min-width: 0;
+}
+
+.chart-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #212121;
+  margin-bottom: 16px;
+}
+
+.chart-container {
+  position: relative;
+  height: 300px;
+  width: 100%;
+}
+
+#status-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+#status-list li {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s ease;
+}
+
+#status-list li:hover {
+  background-color: #f5f5f5;
+}
+
+#status-list li:last-child {
+  border-bottom: none;
+}
+
+.book-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.book-icon {
+  font-size: 20px;
+  flex-shrink: 0;
+}
+
+.book-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.book-title {
+  font-weight: 500;
+  color: #212121;
+  margin-bottom: 8px;
+}
+
+.book-stats {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 14px;
+  color: #757575;
+}
+
+.progress-bar-container {
+  flex: 1;
+  height: 8px;
+  background-color: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+  min-width: 80px;
+  max-width: 200px;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #005eb8 0%, #0074cc 100%);
+  border-radius: 4px;
+  transition: width 0.3s ease;
+}
+
+.progress-text {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.loading-spinner {
+  text-align: center;
+  padding: 40px;
+  color: #757575;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 40px;
+  color: #757575;
+}
+
+.empty-state-icon {
+  font-size: 64px;
+  margin-bottom: 16px;
+  opacity: 0.3;
+}
+
+/* Date Filter */
+.date-filter {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  padding: 16px 24px;
+  margin-bottom: 24px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.date-filter-label {
+  font-size: 14px;
+  font-weight: 500;
+  color: #424242;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.date-range-input {
+  flex: 1;
+  min-width: 250px;
+  padding: 8px 12px;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  font-size: 14px;
+  background-color: #fafafa;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.date-range-input:focus {
+  outline: none;
+  border-color: #005eb8;
+  background-color: white;
+  box-shadow: 0 0 0 2px rgba(0, 94, 184, 0.1);
+}
+
+.date-filter-button {
+  padding: 8px 16px;
+  background-color: #005eb8;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.date-filter-button:hover {
+  background-color: #004a94;
+}
+
+.date-filter-button.secondary {
+  background-color: transparent;
+  color: #005eb8;
+  border: 1px solid #005eb8;
+}
+
+.date-filter-button.secondary:hover {
+  background-color: rgba(0, 94, 184, 0.08);
+}
+
+/* Modal Styles */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.5);
+  z-index: 1100;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-overlay.show {
+  display: flex;
+}
+
+.modal-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: 400;
+  color: #212121;
+  margin: 0;
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  color: #757575;
+  transition: background-color 0.2s ease;
+  font-size: 24px;
+  line-height: 1;
+}
+
+.modal-close:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-body {
+  padding: 24px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.modal-list-item {
+  padding: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.modal-list-item:last-child {
+  border-bottom: none;
+}
+
+.modal-list-item:hover {
+  background-color: #f5f5f5;
+}
+
+.modal-book-title {
+  flex: 1;
+  color: #212121;
+  font-weight: 500;
+}
+
+.modal-book-info {
+  color: #757575;
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.stat-card.clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stat-card.clickable:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stat-card.clickable:active {
+  transform: translateY(-2px);
+}
+
+@media (max-width: 768px) {
+  .charts-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .tablist button {
+    padding: 12px 16px;
+    font-size: 12px;
+  }
+
+  .chart-card {
+    padding: 16px;
+  }
+
+  .chart-container {
+    height: 250px;
+  }
+
+  .book-stats {
+    flex-wrap: wrap;
+  }
+
+  .progress-bar-container {
+    width: 100%;
+    max-width: 100%;
+    order: 2;
+  }
+
+  .progress-text {
+    order: 1;
+    width: 100%;
+  }
+}
+</style>
+{% endblock %}
+
+{% block body %}
+<div class="page-header">
+  <h1 class="page-title">Readings Overview</h1>
+</div>
+
+<div class="date-filter">
+  <label class="date-filter-label" for="date-range">Filter Period:</label>
+  <input type="text" id="date-range" class="date-range-input" placeholder="Select date range" readonly aria-label="Date range filter">
+  <button class="date-filter-button secondary" id="clear-filter">Clear</button>
+</div>
+
+<nav class="tablist" role="tablist" aria-label="Reading sections">
+  <button role="tab" aria-selected="true" aria-controls="overview-section" id="overview-tab" class="active">
+    Overview
+  </button>
+  <button role="tab" aria-selected="false" aria-controls="current-books-section" id="readings-tab">
+    Readings
+  </button>
+  <button role="tab" aria-selected="false" aria-controls="analytics-section" id="analytics-tab">
+    Analytics
+  </button>
+</nav>
+
+<section id="overview-section" class="content-section active" role="tabpanel" aria-labelledby="overview-tab">
+  <div class="stats-grid">
+    <div class="stat-card clickable" id="finished-books-card">
+      <span class="stat-number" id="finished-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="finished-num-display-label">Books read</span>
+    </div>
+
+    <div class="stat-card clickable" id="current-books-card">
+      <span class="stat-number" id="current-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="current-num-display-label">Active readings</span>
+    </div>
+
+    <div class="stat-card">
+      <span class="stat-number" id="avg-num-display" aria-live="polite">-</span>
+      <span class="stat-label" id="avg-num-display-label">Avg. daily pages</span>
+    </div>
+  </div>
+
+  <div class="charts-grid" id="overview-charts-grid">
+    <div class="chart-card">
+      <h2 class="chart-title">Monthly Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="monthly-reads-chart" aria-label="Bar chart showing books completed per month"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card" id="overview-pie-card">
+      <h2 class="chart-title">Current Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="current-read-pages-chart" aria-label="Pie chart showing reading progress for active books"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="current-books-section" class="content-section" role="tabpanel" aria-labelledby="readings-tab">
+  <div class="md-card">
+    <div class="table-header">
+      <h2 class="chart-title">Currently Reading</h2>
+    </div>
+    <ul id="status-list" aria-live="polite" aria-busy="true">
+      <li class="loading-spinner">Loading your reading list...</li>
+    </ul>
+  </div>
+</section>
+
+<section id="analytics-section" class="content-section" role="tabpanel" aria-labelledby="analytics-tab">
+  <div class="charts-grid" id="analytics-charts-grid">
+    <div class="chart-card">
+      <h2 class="chart-title">Monthly Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="analytics-monthly-chart" aria-label="Bar chart showing books completed per month"></canvas>
+      </div>
+    </div>
+
+    <div class="chart-card" id="analytics-pie-card">
+      <h2 class="chart-title">Current Reading Progress</h2>
+      <div class="chart-container">
+        <canvas id="analytics-pie-chart" aria-label="Pie chart showing reading progress for active books"></canvas>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Books Read Modal -->
+<div class="modal-overlay" id="finished-books-modal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2 class="modal-title">Books Read</h2>
+      <button class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <ul class="modal-list" id="finished-books-list">
+        <li class="loading-spinner">Loading...</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- Active Readings Modal -->
+<div class="modal-overlay" id="current-books-modal">
+  <div class="modal-container">
+    <div class="modal-header">
+      <h2 class="modal-title">Active Readings</h2>
+      <button class="modal-close" aria-label="Close modal">&times;</button>
+    </div>
+    <div class="modal-body">
+      <ul class="modal-list" id="current-books-list">
+        <li class="loading-spinner">Loading...</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr@4.6.13/dist/flatpickr.min.css">
+<script>
+// global data storage
+let allBooksData = [];
+let filteredData = [];
+let startDateFilter = null;
+let endDateFilter = null;
+
+// chart variables
+let monthlyChart = null;
+let pieChart = null;
+let analyticsMonthlyChart = null;
+let analyticsPieChart = null;
+
+// initialize Flatpickr for date range
+const dateRangePicker = flatpickr("#date-range", {
+  mode: "range",
+  dateFormat: "Y-m-d",
+  onChange: function(selectedDates, dateStr, instance) {
+    if (selectedDates.length === 2) {
+      startDateFilter = selectedDates[0];
+      endDateFilter = new Date(selectedDates[1]);
+      endDateFilter.setHours(23, 59, 59, 999);
+      processData(allBooksData);
+    }
+  }
+});
+
+// tab navigation
+const tabs = document.querySelectorAll('.tablist button');
+const sections = document.querySelectorAll('.content-section');
+
+tabs.forEach((tab, index) => {
+  tab.addEventListener('click', () => {
+    tabs.forEach(t => {
+      t.classList.remove('active');
+      t.setAttribute('aria-selected', 'false');
+    });
+    tab.classList.add('active');
+    tab.setAttribute('aria-selected', 'true');
+
+    sections.forEach(s => s.classList.remove('active'));
+    sections[index].classList.add('active');
+  });
+
+  tab.addEventListener('keydown', (e) => {
+    let newIndex = index;
+    if (e.key === 'ArrowRight') {
+      newIndex = (index + 1) % tabs.length;
+    } else if (e.key === 'ArrowLeft') {
+      newIndex = (index - 1 + tabs.length) % tabs.length;
+    } else {
+      return;
+    }
+    tabs[newIndex].click();
+    tabs[newIndex].focus();
+    e.preventDefault();
+  });
+});
+
+// Date filter functionality
+document.getElementById('clear-filter').addEventListener('click', () => {
+  dateRangePicker.clear();
+  startDateFilter = null;
+  endDateFilter = null;
+  processData(allBooksData);
+});
+
+// modal functionality
+const finishedBooksModal = document.getElementById('finished-books-modal');
+const currentBooksModal = document.getElementById('current-books-modal');
+
+document.getElementById('finished-books-card').addEventListener('click', () => {
+  finishedBooksModal.classList.add('show');
+  populateFinishedBooksModal();
+});
+
+document.getElementById('current-books-card').addEventListener('click', () => {
+  currentBooksModal.classList.add('show');
+  populateCurrentBooksModal();
+});
+
+document.querySelectorAll('.modal-close').forEach(btn => {
+  btn.addEventListener('click', (e) => {
+    e.target.closest('.modal-overlay').classList.remove('show');
+  });
+});
+
+document.querySelectorAll('.modal-overlay').forEach(overlay => {
+  overlay.addEventListener('click', (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove('show');
+    }
+  });
+});
+
+function populateFinishedBooksModal() {
+  const list = document.getElementById('finished-books-list');
+  const finishedBooks = filteredData.filter(item => {
+    if (item.pages !== item.current) return false;
+    
+    // check if finish_date is within filter range
+    if (item.finish_date) {
+      const finishDate = new Date(item.finish_date);
+      const isWithinFilter = !endDateFilter || finishDate <= endDateFilter;
+      return isWithinFilter;
+    }
+    
+    // if no finish_date but pages equal current, include it
+    return true;
+  });
+  
+  list.innerHTML = '';
+  
+  if (finishedBooks.length === 0) {
+    list.innerHTML = '<li class="empty-state"><div>No books completed in this period</div></li>';
+    return;
+  }
+  
+  finishedBooks.forEach(book => {
+    const li = document.createElement('li');
+    li.className = 'modal-list-item';
+    li.innerHTML = `
+      <span class="modal-book-title">${book.title}</span>
+      <span class="modal-book-info">${book.pages} pages</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function populateCurrentBooksModal() {
+  const list = document.getElementById('current-books-list');
+  const currentBooks = filteredData.filter(item => item.pages !== item.current);
+  const avgPages = parseInt(document.getElementById('avg-num-display').textContent) || 1;
+  
+  list.innerHTML = '';
+  
+  if (currentBooks.length === 0) {
+    list.innerHTML = '<li class="empty-state"><div>No active readings in this period</div></li>';
+    return;
+  }
+  
+  currentBooks.forEach(book => {
+    const pagesLeft = book.pages - book.current;
+    const daysToFinish = Math.ceil(pagesLeft / avgPages);
+    
+    const li = document.createElement('li');
+    li.className = 'modal-list-item';
+    li.innerHTML = `
+      <span class="modal-book-title">${book.title}</span>
+      <span class="modal-book-info">~${daysToFinish} day${daysToFinish !== 1 ? 's' : ''} to finish</span>
+    `;
+    list.appendChild(li);
+  });
+}
+
+function processData(data) {
+  filteredData = data.filter(item => {
+    if (!startDateFilter || !endDateFilter) return true;
+    
+    const itemStartDate = new Date(item.start_date);
+    const itemEndDate = item.finish_date ? new Date(item.finish_date) : new Date();
+    
+    return itemStartDate <= endDateFilter && itemEndDate >= startDateFilter;
+  });
+
+  const list = document.getElementById('status-list');
+  list.innerHTML = '';
+  list.setAttribute('aria-busy', 'false');
+
+  let finishedCount = 0;
+  let currentCount = 0;
+  let sumPagesRead = 0;
+  let firstDate = null;
+  const actualDate = new Date();
+  const currentBooks = [];
+  const monthlyData = {};
+
+  filteredData.forEach(item => {
+    sumPagesRead += item.current;
+
+    if (!firstDate) {
+      firstDate = item.start_date;
+    }
+
+    if (item.pages !== item.current) {
+      currentCount++;
+      currentBooks.push({
+        title: item.title,
+        pages: item.pages,
+        current: item.current
+      });
+      
+      const li = document.createElement('li');
+      const progress = Math.round((item.current / item.pages) * 100);
+      li.innerHTML = `
+        <div class="book-item">
+          <span class="book-icon">📖</span>
+          <div class="book-content">
+            <div class="book-title">${item.title}</div>
+            <div class="book-stats">
+              <div class="progress-bar-container">
+                <div class="progress-bar-fill" style="width: ${progress}%"></div>
+              </div>
+              <span class="progress-text">${item.current}/${item.pages} pages (${progress}%)</span>
+            </div>
+          </div>
+        </div>
+      `;
+      list.appendChild(li);
+    } else {
+      // only count as finished if finish_date is within filter range (or no filter)
+      if (item.finish_date) {
+        const finishDate = new Date(item.finish_date);
+        
+        // check if finish date is within filter range
+        const isWithinFilter = !endDateFilter || finishDate <= endDateFilter;
+        
+        if (isWithinFilter) {
+          finishedCount++;
+          
+          const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
+          monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+        }
+      } else {
+        // if no finish_date but pages equal current, count it
+        finishedCount++;
+        const finishDate = new Date(item.start_date);
+        const monthKey = `${finishDate.getFullYear()}-${String(finishDate.getMonth() + 1).padStart(2, '0')}`;
+        monthlyData[monthKey] = (monthlyData[monthKey] || 0) + 1;
+      }
+    }
+  });
+
+  const hasCurrentReadings = currentCount > 0;
+  const readingsTab = document.getElementById('readings-tab');
+  const currentBooksSection = document.getElementById('current-books-section');
+  const currentBooksCard = document.getElementById('current-books-card');
+  const overviewPieCard = document.getElementById('overview-pie-card');
+  const analyticsPieCard = document.getElementById('analytics-pie-card');
+  
+  if (!hasCurrentReadings) {
+    readingsTab.style.display = 'none';
+    currentBooksSection.style.display = 'none';
+    currentBooksCard.style.display = 'none';
+    overviewPieCard.style.display = 'none';
+    analyticsPieCard.style.display = 'none';
+  } else {
+    readingsTab.style.display = '';
+    currentBooksSection.style.display = '';
+    currentBooksCard.style.display = '';
+    overviewPieCard.style.display = '';
+    analyticsPieCard.style.display = '';
+  }
+
+  if (currentCount === 0) {
+    list.innerHTML = `
+      <li class="empty-state">
+        <div class="empty-state-icon">📚</div>
+        <div>No books currently being read</div>
+      </li>
+    `;
+  }
+
+  const diffInDays = firstDate 
+    ? Math.floor((actualDate - new Date(firstDate)) / (1000 * 60 * 60 * 24))
+    : 0;
+
+  document.getElementById('finished-num-display').textContent = finishedCount;
+  document.getElementById('finished-num-display-label').textContent = finishedCount === 1 ? 'Book read' : 'Books read';
+
+  document.getElementById('current-num-display').textContent = currentCount;
+  document.getElementById('current-num-display-label').textContent = currentCount === 1 ? 'Active reading' : 'Active readings';
+
+  const avgPages = diffInDays > 0 ? Math.floor(sumPagesRead / diffInDays) : 0;
+  document.getElementById('avg-num-display').textContent = avgPages;
+
+  const sortedMonths = Object.keys(monthlyData).sort();
+  const monthLabels = sortedMonths.map(key => {
+    const [year, month] = key.split('-');
+    return new Date(year, month - 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+  });
+  const monthValues = sortedMonths.map(key => monthlyData[key]);
+
+  // create bar chart config
+  const barChartConfig = {
+    type: 'bar',
+    data: {
+      labels: monthLabels.length > 0 ? monthLabels : ['No data'],
+      datasets: [{
+        label: 'Books Completed',
+        data: monthValues.length > 0 ? monthValues : [0],
+        backgroundColor: 'rgba(0, 94, 184, 0.8)',
+        borderColor: 'rgba(0, 94, 184, 1)',
+        borderWidth: 1,
+        borderRadius: 4
+      }]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: {
+          display: false
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          ticks: {
+            stepSize: 1
+          },
+          title: {
+            display: true,
+            text: 'Books Completed'
+          }
+        },
+        x: {
+          title: {
+            display: true,
+            text: 'Month'
+          }
+        }
+      }
+    }
+  };
+
+  // update Overview bar chart
+  const monthlyCtx = document.getElementById('monthly-reads-chart');
+  if (monthlyChart) monthlyChart.destroy();
+  monthlyChart = new Chart(monthlyCtx, barChartConfig);
+
+  // update Analytics bar chart
+  const analyticsMonthlyCtx = document.getElementById('analytics-monthly-chart');
+  if (analyticsMonthlyChart) analyticsMonthlyChart.destroy();
+  analyticsMonthlyChart = new Chart(analyticsMonthlyCtx, JSON.parse(JSON.stringify(barChartConfig)));
+
+  if (hasCurrentReadings) {
+    const pieLabels = currentBooks.map(book => book.title);
+    const pieData = currentBooks.map(book => book.current);
+    const colors = [
+      'rgba(0, 94, 184, 0.8)',
+      'rgba(0, 116, 204, 0.8)',
+      'rgba(33, 150, 243, 0.8)',
+      'rgba(100, 181, 246, 0.8)',
+      'rgba(144, 202, 249, 0.8)'
+    ];
+
+    // create pie chart config
+    const pieChartConfig = {
+      type: 'pie',
+      data: {
+        labels: pieLabels,
+        datasets: [{
+          data: pieData,
+          backgroundColor: colors.slice(0, pieData.length),
+          borderColor: 'white',
+          borderWidth: 2
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: {
+            position: 'bottom',
+            labels: {
+              padding: 15,
+              font: {
+                size: 12
+              }
+            }
+          },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                const book = currentBooks[context.dataIndex];
+                const percentage = ((book.current / book.pages) * 100).toFixed(1);
+                return `${context.label}: ${book.current}/${book.pages} pages (${percentage}%)`;
+              }
+            }
+          }
+        }
+      }
+    };
+
+    // update Overview pie chart
+    const pieCtx = document.getElementById('current-read-pages-chart');
+    if (pieChart) pieChart.destroy();
+    pieChart = new Chart(pieCtx, pieChartConfig);
+
+    // update Analytics pie chart
+    const analyticsPieCtx = document.getElementById('analytics-pie-chart');
+    if (analyticsPieChart) analyticsPieChart.destroy();
+    analyticsPieChart = new Chart(analyticsPieCtx, JSON.parse(JSON.stringify(pieChartConfig)));
+  }
+}
+
+// fetch and display data
+fetch('/api/overview')
+  .then(res => res.json())
+  .then(data => {
+    console.log("API DATA:", data);
+    allBooksData = data;
+    processData(data);
+  })
+  .catch(error => {
+    console.error('Error fetching data:', error);
+    document.getElementById('status-list').innerHTML = `
+      <li class="empty-state">
+        <div class="empty-state-icon">⚠️</div>
+        <div>Failed to load reading data</div>
+      </li>
+    `;
+  });
+</script>
+{% endblock %}

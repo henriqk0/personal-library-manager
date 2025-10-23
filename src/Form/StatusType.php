@@ -29,6 +29,16 @@ class StatusType extends AbstractType
                     ]
                 );
         }
+        if (!$options['empty_data']) {
+            $builder
+                ->add(child: 'completion_date', type:DateTimeType::class, 
+                    options: [
+                        'label' => 'Completion date',
+                        'widget' => 'single_text',
+                        'required' => false
+                    ]
+                );
+        }
     }
 
     public function configureOptions(OptionsResolver $resolver): void
