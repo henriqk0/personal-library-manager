@@ -188,4 +188,4 @@ Project: [github.com/henriqk0/personal-library-manager](https://github.com/henri
 
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
 [linkedin-url]: https://www.linkedin.com/in/henriqdeslima/
-[product-screenshot]: https://github.com/henriqk0/personal-library-manager/blob/main/2readme/image.js
+[product-screenshot]: https://github.com/henriqk0/personal-library-manager/blob/main/2readme/image.png
